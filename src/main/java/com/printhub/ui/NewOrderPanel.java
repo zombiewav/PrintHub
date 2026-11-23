@@ -22,6 +22,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -57,19 +59,76 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         refresh();
     }
 
-    /** The discount picker goes under the rush hint and its amount under the rush fee (both in the empty filler panels). */
+    private static final String[] PICTURE_SIZES = {"1x1", "2x2", "Passport (35x45 mm)", "1.5x1.5"};
+    private static final String[] BINDING_TYPES = {"Spiral", "Comb", "Tape", "Hard cover"};
+
+    private final JComboBox<String> detailBox = Ui.combo(new JComboBox<>());
+    private final JSpinner detailQty = Ui.spinner(new JSpinner(new SpinnerNumberModel(6, 1, 500, 1)));
+    private final JLabel detailCaption = Ui.caption(" ");
+    private final JPanel detailPanel = Ui.panel(new BorderLayout(8, 4));
+
+    /**
+     * The discount picker goes under the rush hint and its amount under the rush fee (both in the empty filler
+     * panels). ID Picture and Document Binding also get a detail row: picture size and count, or binding type.
+     */
     private void addDiscountControls() {
         JPanel picker = Ui.panel(new BorderLayout(0, 4));
         picker.setBorder(new EmptyBorder(16, 0, 0, 0));
         picker.add(Ui.caption("Discount"), BorderLayout.NORTH);
         picker.add(discountBox, BorderLayout.CENTER);
-        detailsFiller.add(picker, BorderLayout.NORTH);
+
+        detailPanel.setBorder(new EmptyBorder(16, 0, 0, 0));
+        detailPanel.add(detailCaption, BorderLayout.NORTH);
+        detailPanel.add(detailBox, BorderLayout.CENTER);
+        detailPanel.add(detailQty, BorderLayout.EAST);
+        detailQty.setPreferredSize(new Dimension(90, detailQty.getPreferredSize().height));
+
+        JPanel extras = Ui.panel(null);
+        extras.setLayout(new BoxLayout(extras, BoxLayout.Y_AXIS));
+        extras.add(detailPanel);
+        extras.add(picker);
+        detailsFiller.add(extras, BorderLayout.NORTH);
+        serviceBox.addActionListener(e -> updateDetailControls());
+        updateDetailControls();
 
         JPanel row = Ui.panel(new BorderLayout());
         row.setBorder(new EmptyBorder(5, 0, 5, 0));
         row.add(Ui.label("Discount", FONT_BODY, TEXT_SECONDARY), BorderLayout.WEST);
         row.add(discountValueLabel, BorderLayout.EAST);
         priceFiller.add(row, BorderLayout.NORTH);
+    }
+
+    /** Shows the picture size and count for ID Picture, the binding type for Document Binding, nothing otherwise. */
+    private void updateDetailControls() {
+        Service s = (Service) serviceBox.getSelectedItem();
+        detailBox.removeAllItems();
+        if (s == Service.ID_PICTURE) {
+            detailCaption.setText("Picture size and number of pictures");
+            for (String size : PICTURE_SIZES) {
+                detailBox.addItem(size);
+            }
+        } else if (s == Service.BINDING) {
+            detailCaption.setText("Binding type");
+            for (String type : BINDING_TYPES) {
+                detailBox.addItem(type);
+            }
+        }
+        detailQty.setVisible(s == Service.ID_PICTURE);
+        detailPanel.setVisible(s == Service.ID_PICTURE || s == Service.BINDING);
+        detailPanel.revalidate();
+    }
+
+    /** "2x2 · 6 pcs" for ID pictures, "Spiral" for binding, null for other services. */
+    private String currentDetail() {
+        Service s = (Service) serviceBox.getSelectedItem();
+        Object choice = detailBox.getSelectedItem();
+        if (choice == null) {
+            return null;
+        }
+        if (s == Service.ID_PICTURE) {
+            return choice + " " + Ui.DOT + " " + detailQty.getValue() + " pcs";
+        }
+        return s == Service.BINDING ? String.valueOf(choice) : null;
     }
 
     private void loadDiscounts() {
@@ -190,6 +249,16 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         stockRows.add(sectionLabel("Ink (pages remaining)"));
         for (StockEstimate.Line l : est.getInk()) {
             stockRows.add(stockRow(l));
+        }
+        boolean anyOther = false;
+        for (StockEstimate.Line l : est.getOther()) {
+            if (l.isUsed()) {
+                if (!anyOther) {
+                    stockRows.add(sectionLabel("Other materials"));
+                    anyOther = true;
+                }
+                stockRows.add(stockRow(l));
+            }
         }
         if (stockOk) {
             stockBanner.setColors(COMPLETED[0], null);
@@ -313,7 +382,8 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         try {
             job = data.placeOrder(name, (Service) serviceBox.getSelectedItem(), (PaperSize) sizeBox.getSelectedItem(),
                     (Integer) pagesSpinner.getValue(), (Integer) copiesSpinner.getValue(), rushCheck.isSelected(),
-                    selectedDiscount(), method, method == PaymentMethod.CASH ? paid : 0, ref);
+                    selectedDiscount(), method, method == PaymentMethod.CASH ? paid : 0, ref,
+                    method == PaymentMethod.GCASH ? senderField.getText().trim() : null, currentDetail());
         } catch (IllegalArgumentException | IllegalStateException ex) {
             warn(ex.getMessage());
             recalc();

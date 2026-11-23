@@ -35,6 +35,9 @@ public class Receipt {
         sb.append("Job:        ").append(job.getId()).append('\n');
         sb.append("------------------------------\n");
         sb.append(job.getService().label()).append(" · ").append(job.getSize().label()).append('\n');
+        if (job.getDetail() != null) {
+            sb.append(job.getDetail()).append('\n');
+        }
         sb.append(job.getPages()).append(" pages × ").append(job.getCopies()).append(" copies\n");
         if (job.isRush()) {
             sb.append("Rush order\n");
@@ -50,6 +53,9 @@ public class Receipt {
             sb.append("Change:     ").append(peso(transaction.getChange())).append('\n');
         } else if (transaction.getReference() != null) {
             sb.append("GCash Ref:  ").append(transaction.getReference()).append('\n');
+            if (transaction.getSender() != null) {
+                sb.append("Sender:     ").append(transaction.getSender()).append('\n');
+            }
         }
         sb.append("------------------------------\n");
         sb.append("Served by:  ").append(transaction.getHandledBy()).append('\n');

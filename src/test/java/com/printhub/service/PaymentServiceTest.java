@@ -75,6 +75,21 @@ class PaymentServiceTest {
     }
 
     @Test
+    void gcashSenderIsStoredShownOnTheReceiptAndSurvivesRestart() {
+        JobOrder j = job(180);
+        Transaction t = payments.record(j, PaymentMethod.GCASH, 0, "4021 553 981 204", "0917 123 4567");
+        assertEquals("0917 123 4567", t.getSender());
+        assertTrue(payments.receipt(t, j).text().contains("0917 123 4567"));
+        assertEquals("0917 123 4567", new PaymentService(db).transactionFor(j).getSender());
+    }
+
+    @Test
+    void cashPaymentHasNoSender() {
+        Transaction t = payments.record(job(10), PaymentMethod.CASH, 10, null);
+        assertNull(t.getSender());
+    }
+
+    @Test
     void recordingTheSameJobTwiceIsRejected() {
         JobOrder j = job(100);
         payments.record(j, PaymentMethod.CASH, 100, null);

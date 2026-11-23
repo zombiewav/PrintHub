@@ -40,7 +40,9 @@ public class JobTab extends javax.swing.JPanel {
             model.addRow(new Object[] {
                 numbered ? String.valueOf(n++) : Ui.DASH,
                 j.getId(), j.getSource() == JobSource.ONLINE ? j.getCustomer() + " (Online)" : j.getCustomer(),
-                j.getService().label(), j.getSize().label(), j.pagesCopies(),
+                j.getDetail() == null ? j.getService().label()
+                        : j.getService().label() + " " + Ui.DOT + " " + j.getDetail(),
+                j.getSize().label(), j.pagesCopies(),
                 j.isRush() ? "Rush" : "Normal", j.getReceived().format(Ui.TIME), j.getStatus().label(),
                 j.getPaymentStatus().label()});
         }

@@ -29,6 +29,10 @@ final class Seeder {
     private static final Map<PaperSize, String> PAPER = Map.of(PaperSize.A4, "SUP-001", PaperSize.SHORT, "SUP-002",
             PaperSize.LONG, "SUP-003");
 
+    private static final Map<PaperSize, String> FILM = Map.of(PaperSize.A4, "SUP-006", PaperSize.LONG, "SUP-007",
+            PaperSize.SHORT, "SUP-010");
+    private static final Map<PaperSize, String> PHOTO = Map.of(PaperSize.A4, "SUP-008");
+
     private Seeder() {
     }
 
@@ -110,7 +114,15 @@ final class Seeder {
                 continue;
             }
             int qty = j.pages() * j.copies();
-            reserved.merge(PAPER.get(j.size()), qty, Integer::sum);
+            String sheet = switch (j.service().material()) {
+                case PAPER -> PAPER.get(j.size());
+                case LAMINATION_FILM -> FILM.get(j.size());
+                case PHOTO_PAPER -> PHOTO.getOrDefault(j.size(), "SUP-009"); // 4R when there is no photo paper in that size
+                case NONE -> null;
+            };
+            if (sheet != null) {
+                reserved.merge(sheet, qty, Integer::sum);
+            }
             if (j.service().usesBlackInk()) {
                 reserved.merge("SUP-004", qty, Integer::sum);
             }

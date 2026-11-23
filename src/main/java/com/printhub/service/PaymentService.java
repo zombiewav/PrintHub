@@ -31,12 +31,13 @@ public class PaymentService {
     public PaymentService(Database db) {
         this.db = db;
         transactions.addAll(db.query("SELECT id, time, customer, job_id, amount_centavos, method, reference, status,"
-                + " discount_centavos, tendered_centavos, change_centavos, handled_by FROM payment"
+                + " discount_centavos, tendered_centavos, change_centavos, handled_by, sender FROM payment"
                 + " ORDER BY time DESC, id DESC", rs -> new Transaction(rs.getString(1),
                         LocalDateTime.parse(rs.getString(2)), rs.getString(3), rs.getString(4),
                         Money.fromCentavos(rs.getLong(5)), PaymentMethod.valueOf(rs.getString(6)), rs.getString(7),
                         PaymentStatus.valueOf(rs.getString(8)), Money.fromCentavos(rs.getLong(9)),
-                        Money.fromCentavos(rs.getLong(10)), Money.fromCentavos(rs.getLong(11)), rs.getString(12))));
+                        Money.fromCentavos(rs.getLong(10)), Money.fromCentavos(rs.getLong(11)), rs.getString(12),
+                        rs.getString(13))));
         for (Transaction t : transactions) {
             Matcher m = ID.matcher(t.getId());
             if (m.matches()) {
@@ -50,6 +51,11 @@ public class PaymentService {
      * GCash needs a reference number. A job can only be paid once.
      */
     public Transaction record(JobOrder job, PaymentMethod method, double tendered, String reference) {
+        return record(job, method, tendered, reference, null);
+    }
+
+    /** Same, also keeping the GCash number the customer sent the money from. */
+    public Transaction record(JobOrder job, PaymentMethod method, double tendered, String reference, String sender) {
         synchronized (db.lock()) {
             Transaction existing = transactionFor(job);
             if (existing != null && existing.getStatus() == PaymentStatus.PAID) {
@@ -60,15 +66,18 @@ public class PaymentService {
             long given = method == PaymentMethod.CASH ? Money.toCentavos(tendered) : 0;
             long change = method == PaymentMethod.CASH ? given - amount : 0;
             String ref = method == PaymentMethod.GCASH ? reference.trim() : null;
+            String from = method == PaymentMethod.GCASH && sender != null && !sender.trim().isEmpty()
+                    ? sender.trim() : null;
             Transaction t = new Transaction(String.format("TXN-%04d", nextNumber), LocalDateTime.now(),
                     job.getCustomer(), job.getId(), Money.fromCentavos(amount), method, ref, PaymentStatus.PAID,
                     job.getDiscountAmount(), Money.fromCentavos(given), Money.fromCentavos(change),
-                    Session.username());
+                    Session.username(), from);
             db.update("INSERT INTO payment(id, time, customer, job_id, amount_centavos, method, reference, status,"
-                    + " discount_centavos, tendered_centavos, change_centavos, handled_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    + " discount_centavos, tendered_centavos, change_centavos, handled_by, sender)"
+                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     t.getId(), t.getDateTime().toString(), t.getCustomer(), t.getJobId(), amount, method.name(), ref,
                     PaymentStatus.PAID.name(), Money.toCentavos(job.getDiscountAmount()), given, change,
-                    t.getHandledBy());
+                    t.getHandledBy(), from);
             nextNumber++;
             transactions.add(0, t);
             return t;

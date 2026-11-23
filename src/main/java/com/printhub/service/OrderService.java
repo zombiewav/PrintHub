@@ -46,6 +46,17 @@ public class OrderService {
     /** Takes a counter order: checks stock and payment, queues the job as paid and records the transaction. */
     public JobOrder placeWalkIn(String customer, Service service, PaperSize size, int pages, int copies,
             boolean rush, Discount discountOrNull, PaymentMethod method, double tendered, String reference) {
+        return placeWalkIn(customer, service, size, pages, copies, rush, discountOrNull, method, tendered, reference,
+                null, null);
+    }
+
+    /**
+     * Same, also keeping the GCash sender number and the service detail (ID picture size and count,
+     * binding type).
+     */
+    public JobOrder placeWalkIn(String customer, Service service, PaperSize size, int pages, int copies,
+            boolean rush, Discount discountOrNull, PaymentMethod method, double tendered, String reference,
+            String sender, String detail) {
         synchronized (db.lock()) {
             double total = pricing.total(service, size, pages, copies, rush, discountOrNull);
             if (!estimate(service, size, pages * copies).isSufficient()) {
@@ -58,8 +69,8 @@ public class OrderService {
             JobOrder[] placed = new JobOrder[1];
             db.inTransaction(() -> {
                 placed[0] = queue.submit(customer, service, size, pages, copies, rush, JobSource.WALK_IN,
-                        PaymentStatus.PAID, null, total, discountName, discountAmount);
-                payments.record(placed[0], method, tendered, reference);
+                        PaymentStatus.PAID, null, total, discountName, discountAmount, detail);
+                payments.record(placed[0], method, tendered, reference, sender);
             });
             return placed[0];
         }
@@ -67,12 +78,18 @@ public class OrderService {
 
     /** Staff confirms payment for a waiting (usually online) job so it can be printed. */
     public Transaction markPaid(JobOrder job, PaymentMethod method, double tendered, String reference) {
+        return markPaid(job, method, tendered, reference, null);
+    }
+
+    /** Same, also keeping the GCash number the customer paid from. */
+    public Transaction markPaid(JobOrder job, PaymentMethod method, double tendered, String reference,
+            String sender) {
         synchronized (db.lock()) {
             payments.validate(job.getTotal(), method, tendered, reference);
             Transaction[] recorded = new Transaction[1];
             db.inTransaction(() -> {
                 queue.markPaid(job);
-                recorded[0] = payments.record(job, method, tendered, reference);
+                recorded[0] = payments.record(job, method, tendered, reference, sender);
             });
             return recorded[0];
         }

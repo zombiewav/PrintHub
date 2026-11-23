@@ -26,6 +26,7 @@ public class JobOrder implements Comparable<JobOrder> {
     private double total;
     private String discountName;
     private double discountAmount;
+    private String detail;
     private LocalDateTime cancelledAt;
 
     /** A job received today at the given time. */
@@ -159,6 +160,15 @@ public class JobOrder implements Comparable<JobOrder> {
 
     public void setDiscountName(String discountName) {
         this.discountName = discountName;
+    }
+
+    /** Extra detail the service needs: ID picture size and count, or the binding type. Null for other services. */
+    public String getDetail() {
+        return detail;
+    }
+
+    public void setDetail(String detail) {
+        this.detail = detail;
     }
 
     public LocalDateTime getCancelledAt() {

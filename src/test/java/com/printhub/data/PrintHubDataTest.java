@@ -175,6 +175,34 @@ class PrintHubDataTest {
     }
 
     @Test
+    void seededLaminationAndIdPictureJobsClaimFilmAndPhotoPaperNotBondPaper() {
+        // bond A4 is claimed only by the B&W (8) and colored (60 + 90 processing) jobs
+        assertEquals(1250 + 8 + 60 + 90, data.findSupply("SUP-001").getStock());
+        var film = data.estimate(Service.LAMINATION, PaperSize.A4, 1).getOther();
+        assertEquals(60, film.stream().filter(l -> l.getLabel().equals("Lamination film")).findFirst().get().getAvailable());
+        var photo = data.estimate(Service.ID_PICTURE, PaperSize.A4, 1).getOther();
+        assertEquals(90, photo.stream().filter(l -> l.getLabel().equals("Photo paper")).findFirst().get().getAvailable());
+    }
+
+    @Test
+    void scanningNeedsNoStockAtAll() {
+        assertTrue(data.estimate(Service.SCANNING, PaperSize.A4, 1_000_000).isSufficient());
+    }
+
+    @Test
+    void orderDetailAndGcashSenderAreKeptOnTheJobTheReceiptAndAfterRestart() {
+        JobOrder job = data.placeOrder("Maria", Service.ID_PICTURE, PaperSize.A4, 1, 2, false, null,
+                PaymentMethod.GCASH, 0, "4021 000 111", "0917 555 0000", "2x2 · 6 pcs");
+        assertEquals("2x2 · 6 pcs", job.getDetail());
+        String receipt = data.receipt(data.transactionFor(job)).text();
+        assertTrue(receipt.contains("2x2 · 6 pcs"), receipt);
+        assertTrue(receipt.contains("0917 555 0000"), receipt);
+        PrintHubData reopened = new PrintHubData(db);
+        JobOrder loaded = reopened.pendingJobs().stream().filter(j -> j.getNumber() == job.getNumber()).findFirst().get();
+        assertEquals("2x2 · 6 pcs", loaded.getDetail());
+    }
+
+    @Test
     void listenersAreNotifiedOnChange() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         data.addListener(latch::countDown);
