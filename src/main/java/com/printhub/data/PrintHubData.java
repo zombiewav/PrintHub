@@ -1,56 +1,91 @@
 package com.printhub.data;
 
+import com.printhub.db.Database;
+import com.printhub.db.Settings;
 import com.printhub.model.Account;
+import com.printhub.model.Discount;
 import com.printhub.model.JobOrder;
-import com.printhub.model.JobStatus;
 import com.printhub.model.PaperSize;
 import com.printhub.model.PaymentMethod;
 import com.printhub.model.PriceTable;
+import com.printhub.model.Receipt;
+import com.printhub.model.Restock;
 import com.printhub.model.Service;
 import com.printhub.model.StockEstimate;
+import com.printhub.model.Supplier;
 import com.printhub.model.Supply;
 import com.printhub.model.Transaction;
 import com.printhub.model.WasteReason;
 import com.printhub.model.WasteRecord;
-import java.time.LocalDate;
+import com.printhub.service.AccountService;
+import com.printhub.service.InventoryService;
+import com.printhub.service.JobQueueService;
+import com.printhub.service.OrderService;
+import com.printhub.service.PaymentService;
+import com.printhub.service.PricingService;
+import com.printhub.service.ReportService;
+import com.printhub.service.StockEstimator;
+import com.printhub.service.SupplierService;
+import java.awt.EventQueue;
+import java.io.File;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import javax.swing.Timer;
 
 /**
- * In-memory data for the whole app, seeded with sample records so every screen has something to show.
- * Screens read from here and register a listener to redraw when anything changes.
- * Swap this class for file or database storage later without touching the screens.
+ * The one door the screens use to reach the shop's data. It owns the SQLite database and the services
+ * (inventory, queue, pricing, payments, suppliers, reports, accounts) and tells the screens when anything
+ * changes so they can redraw.
  */
 public final class PrintHubData {
 
-    private static final PrintHubData INSTANCE = new PrintHubData();
+    private static PrintHubData instance;
 
-    public static PrintHubData get() {
-        return INSTANCE;
+    /** The app-wide instance, backed by printhub.db in the folder the app was started from. */
+    public static synchronized PrintHubData get() {
+        if (instance == null) {
+            String path = System.getProperty("user.dir") + File.separator + "printhub.db";
+            instance = new PrintHubData(Database.open("jdbc:sqlite:" + path));
+            instance.startBackgroundTasks();
+        }
+        return instance;
     }
 
-    private final List<Account> accounts = new ArrayList<>();
-    private final PriceTable prices = new PriceTable();
-    private final Map<String, Supply> supplies = new LinkedHashMap<>();
-    private final PriorityQueue<JobOrder> pending = new PriorityQueue<>();
-    private final List<JobOrder> processing = new ArrayList<>();
-    private final List<JobOrder> completed = new ArrayList<>();
-    private final List<WasteRecord> waste = new ArrayList<>();
-    private final List<Transaction> transactions = new ArrayList<>();
-    private final List<Runnable> listeners = new ArrayList<>();
+    private final AccountService accounts;
+    private final InventoryService inventory;
+    private final PricingService pricing;
+    private final SupplierService suppliers;
+    private final JobQueueService queue;
+    private final PaymentService payments;
+    private final OrderService orders;
+    private final ReportService reports;
+    private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
-    private int nextJobNo = 236;
-    private int nextTxnNo = 422;
-    private int nextSupplyNo = 11;
+    /** Opens the services on a database, loading the sample shop if it is brand new. */
+    PrintHubData(Database db) {
+        Seeder.seed(db);
+        Settings settings = new Settings(db);
+        this.accounts = new AccountService(db);
+        this.inventory = new InventoryService(db);
+        this.pricing = new PricingService(db);
+        this.suppliers = new SupplierService(db, inventory);
+        StockEstimator estimator = new StockEstimator(inventory, settings);
+        this.queue = new JobQueueService(db, inventory, estimator, settings);
+        this.payments = new PaymentService(db);
+        this.orders = new OrderService(db, queue, payments, pricing, estimator);
+        this.reports = new ReportService(payments, inventory, suppliers, queue);
+    }
 
-    private PrintHubData() {
-        seed();
+    /** Cancels unpaid online jobs that waited too long. Checked once a minute. */
+    private void startBackgroundTasks() {
+        new Timer(60_000, e -> {
+            if (queue.expireUnpaid(LocalDateTime.now()) > 0) {
+                changed();
+            }
+        }).start();
     }
 
     // ---- Change notification ----------------------------------------------------------------
@@ -63,292 +98,248 @@ public final class PrintHubData {
         listeners.remove(listener);
     }
 
+    /** Tells every screen to redraw. Always runs on the Swing thread. */
     public void changed() {
+        if (EventQueue.isDispatchThread()) {
+            fire();
+        } else {
+            EventQueue.invokeLater(this::fire);
+        }
+    }
+
+    private void fire() {
         for (Runnable r : new ArrayList<>(listeners)) {
             r.run();
         }
     }
 
+    // ---- Services for screens that need more than the shortcuts below -----------------------
+
+    public ReportService reports() {
+        return reports;
+    }
+
+    public AccountService accounts() {
+        return accounts;
+    }
+
+    public PaymentService payments() {
+        return payments;
+    }
+
     // ---- Login ------------------------------------------------------------------------------
 
     public Account authenticate(String username, String password) {
-        for (Account a : accounts) {
-            if (a.matches(username, password)) {
-                return a;
-            }
-        }
-        return null;
+        return accounts.authenticate(username, password);
     }
 
-    // ---- Prices -----------------------------------------------------------------------------
+    public void logout() {
+        accounts.logout();
+    }
+
+    // ---- Prices and discounts ---------------------------------------------------------------
 
     public PriceTable prices() {
-        return prices;
+        return pricing.prices();
+    }
+
+    /** Saves the price table after a screen has edited it. */
+    public void savePrices() {
+        pricing.save();
+        changed();
+    }
+
+    public List<Discount> discounts() {
+        return pricing.discounts();
     }
 
     // ---- Supplies ---------------------------------------------------------------------------
 
     public List<Supply> supplies() {
-        return new ArrayList<>(supplies.values());
+        return inventory.supplies();
     }
 
     public Supply findSupply(String id) {
-        return supplies.get(id);
+        return inventory.find(id);
     }
 
     public String newSupplyId() {
-        return String.format("SUP-%03d", nextSupplyNo);
+        return inventory.newId();
     }
 
     public void addSupply(Supply supply) {
-        supplies.put(supply.getId(), supply);
-        nextSupplyNo++;
+        inventory.add(supply);
+        changed();
+    }
+
+    /** Saves a supply a screen has edited. */
+    public void updateSupply(Supply supply) {
+        inventory.update(supply);
         changed();
     }
 
     public void removeSupply(String id) {
-        supplies.remove(id);
+        inventory.delete(id);
         changed();
     }
 
     public void restock(Supply supply, int qty) {
-        supply.restock(qty);
+        inventory.restock(supply, qty);
         changed();
     }
 
     public List<Supply> lowStock() {
-        List<Supply> list = new ArrayList<>();
-        for (Supply s : supplies.values()) {
-            if (s.needsAttention()) {
-                list.add(s);
-            }
-        }
-        return list;
+        return inventory.lowStock();
     }
 
-    private Supply findPaper(PaperSize size) {
-        for (Supply s : supplies.values()) {
-            if (s.getCategory().equals("Paper") && s.getSize().equals(size.label())) {
-                return s;
-            }
-        }
-        return null;
+    // ---- Suppliers --------------------------------------------------------------------------
+
+    public List<Supplier> supplierList() {
+        return suppliers.all();
     }
 
-    private Supply findInk(boolean color) {
-        for (Supply s : supplies.values()) {
-            if (s.getCategory().equals("Ink") && s.getName().startsWith(color ? "Color" : "Black")) {
-                return s;
-            }
-        }
-        return null;
+    public Supplier addSupplier(String name, String address, String phone, Collection<Supply> provides) {
+        Supplier s = suppliers.add(name, address, phone, provides);
+        changed();
+        return s;
+    }
+
+    public void updateSupplier(Supplier supplier) {
+        suppliers.update(supplier);
+        changed();
+    }
+
+    public void deleteSupplier(String id) {
+        suppliers.delete(id);
+        changed();
+    }
+
+    /** Buys stock from a supplier and records the purchase. */
+    public Restock restockFrom(Supplier supplier, Supply supply, int qty, double totalCost) {
+        Restock r = suppliers.restock(supplier, supply, qty, totalCost);
+        changed();
+        return r;
+    }
+
+    public List<Restock> supplierHistory(Supplier supplierOrNull) {
+        return suppliers.history(supplierOrNull);
+    }
+
+    public double supplierExpenses(Supplier supplierOrNull) {
+        return suppliers.totalExpenses(supplierOrNull);
+    }
+
+    /** Suppliers that provide an item, for the reorder reminder. */
+    public List<Supplier> suppliersFor(Supply supply) {
+        return suppliers.suppliersFor(supply);
     }
 
     // ---- Orders and the job queue -----------------------------------------------------------
 
     public String nextOrderId() {
-        return String.format("JOB-%04d", nextJobNo);
+        return queue.nextId();
     }
 
-    /** Checks paper (by size) and ink against what is on the shelf. */
+    /** Checks paper (by size) and ink against what is on the shelf, minus what queued jobs have claimed. */
     public StockEstimate estimate(Service service, PaperSize size, int quantity) {
-        List<StockEstimate.Line> paper = new ArrayList<>();
-        for (PaperSize z : PaperSize.values()) {
-            Supply s = findPaper(z);
-            boolean used = z == size;
-            paper.add(new StockEstimate.Line(z.label(), used, used ? quantity : 0,
-                    s == null ? 0 : s.getStock(), "sheets"));
-        }
-        List<StockEstimate.Line> ink = new ArrayList<>();
-        Supply black = findInk(false);
-        Supply color = findInk(true);
-        ink.add(new StockEstimate.Line("Black ink", service.usesBlackInk(),
-                service.usesBlackInk() ? quantity : 0, black == null ? 0 : black.getStock(), "pages"));
-        ink.add(new StockEstimate.Line("Color ink", service.usesColorInk(),
-                service.usesColorInk() ? quantity : 0, color == null ? 0 : color.getStock(), "pages"));
-        return new StockEstimate(paper, ink);
+        return orders.estimate(service, size, quantity);
     }
 
-    /**
-     * Takes the order: deducts paper and ink, adds the job to the priority queue and records the payment.
-     * Rush jobs go ahead of normal ones.
-     */
+    /** Takes a counter order with no discount; cash is taken as exactly the total. */
     public JobOrder placeOrder(String customer, Service service, PaperSize size, int pages, int copies,
             boolean rush, PaymentMethod method, String reference) {
-        int quantity = pages * copies;
-        if (!estimate(service, size, quantity).isSufficient()) {
-            throw new IllegalStateException("Not enough stock for this order.");
-        }
-        findPaper(size).deduct(quantity);
-        if (service.usesBlackInk()) {
-            findInk(false).deduct(quantity);
-        }
-        if (service.usesColorInk()) {
-            findInk(true).deduct(quantity);
-        }
+        double total = orders.quote(service, size, pages, copies, rush, null);
+        return placeOrder(customer, service, size, pages, copies, rush, null, method, total, reference);
+    }
 
-        JobOrder job = new JobOrder(nextJobNo++, customer, service, size, pages, copies, rush, LocalTime.now());
-        pending.add(job);
-
-        double total = prices.total(service, size, pages, copies, rush);
-        transactions.add(0, new Transaction(String.format("TXN-%04d", nextTxnNo++), LocalDateTime.now(),
-                customer, job.getId(), total, method, reference));
+    public JobOrder placeOrder(String customer, Service service, PaperSize size, int pages, int copies,
+            boolean rush, Discount discount, PaymentMethod method, double tendered, String reference) {
+        JobOrder job = orders.placeWalkIn(customer, service, size, pages, copies, rush, discount, method, tendered,
+                reference);
         changed();
         return job;
     }
 
-    /** Pending jobs in queue order (rush first, then first come, first served). */
-    public List<JobOrder> pendingJobs() {
-        List<JobOrder> list = new ArrayList<>(pending);
-        Collections.sort(list);
-        return list;
+    /** Staff confirms a waiting job has been paid so it can be printed. */
+    public Transaction markPaid(JobOrder job, PaymentMethod method, double tendered, String reference) {
+        Transaction t = orders.markPaid(job, method, tendered, reference);
+        changed();
+        return t;
     }
 
+    public void cancelJob(JobOrder job) {
+        orders.cancel(job);
+        changed();
+    }
+
+    /** Pending jobs in queue order (rush first, then first come first served); unpaid ones are included. */
+    public List<JobOrder> pendingJobs() {
+        return queue.pending();
+    }
+
+    /** The job that would start next: the first paid one. */
     public JobOrder peekNext() {
-        return pending.peek();
+        return queue.peekNext();
     }
 
     public List<JobOrder> processingJobs() {
-        return new ArrayList<>(processing);
+        return queue.processing();
     }
 
     public List<JobOrder> completedJobs() {
-        return new ArrayList<>(completed);
+        return queue.completed();
+    }
+
+    public List<JobOrder> cancelledJobs() {
+        return queue.cancelled();
     }
 
     public List<JobOrder> allJobs() {
-        List<JobOrder> list = new ArrayList<>(pendingJobs());
-        list.addAll(processing);
-        list.addAll(completed);
-        Collections.sort(list, (a, b) -> Integer.compare(b.getNumber(), a.getNumber()));
-        return list;
+        return queue.all();
     }
 
     public JobOrder startNextJob() {
-        JobOrder job = pending.poll();
+        JobOrder job = queue.startNext();
         if (job != null) {
-            job.setStatus(JobStatus.PROCESSING);
-            processing.add(job);
             changed();
         }
         return job;
     }
 
     public void completeJob(JobOrder job) {
-        if (processing.remove(job)) {
-            job.setStatus(JobStatus.COMPLETED);
-            completed.add(0, job);
-            changed();
-        }
+        queue.complete(job);
+        changed();
     }
 
     // ---- Waste ------------------------------------------------------------------------------
 
     public List<WasteRecord> wasteLog() {
-        return new ArrayList<>(waste);
+        return inventory.wasteLog();
     }
 
     /** Deducts the wasted quantity from stock and writes it to the waste log. */
     public void recordWaste(Supply supply, int qty, WasteReason reason, String jobId) {
-        supply.deduct(qty);
-        waste.add(0, new WasteRecord(LocalDateTime.now(), supply, qty, reason, jobId));
+        inventory.recordWaste(supply, qty, reason, jobId);
         changed();
     }
 
     // ---- Sales ------------------------------------------------------------------------------
 
     public List<Transaction> transactions() {
-        return new ArrayList<>(transactions);
+        return payments.transactions();
     }
 
-    // ---- Sample data ------------------------------------------------------------------------
-
-    private void seed() {
-        accounts.add(new Account("lmendoza", "printhub", "Liza Mendoza", "Cashier"));
-
-        prices.set(Service.BW, PaperSize.A4, 2);
-        prices.set(Service.BW, PaperSize.SHORT, 2);
-        prices.set(Service.BW, PaperSize.LONG, 3);
-        prices.set(Service.COLORED, PaperSize.A4, 10);
-        prices.set(Service.COLORED, PaperSize.SHORT, 10);
-        prices.set(Service.COLORED, PaperSize.LONG, 12);
-        prices.set(Service.LAMINATION, PaperSize.A4, 25);
-        prices.set(Service.LAMINATION, PaperSize.SHORT, 25);
-        prices.set(Service.LAMINATION, PaperSize.LONG, 30);
-        prices.set(Service.ID_PICTURE, PaperSize.A4, 50);
-        prices.set(Service.ID_PICTURE, PaperSize.SHORT, 50);
-        prices.set(Service.ID_PICTURE, PaperSize.LONG, 60);
-        prices.setRushFee(20);
-
-        String none = Supply.NO_SIZE;
-        put(new Supply("SUP-001", "Bond Paper 70gsm", "Paper", "A4", "sheets", 1250, 500));
-        put(new Supply("SUP-002", "Bond Paper 70gsm", "Paper", "Short", "sheets", 980, 500));
-        put(new Supply("SUP-003", "Bond Paper 70gsm", "Paper", "Long", "sheets", 180, 300));
-        put(new Supply("SUP-004", "Black Ink (Epson 003)", "Ink", none, "pages", 2400, 1000));
-        put(new Supply("SUP-005", "Color Ink Set (Epson 003)", "Ink", none, "pages", 420, 500));
-        put(new Supply("SUP-006", "Lamination Film Pouch", "Lamination Film", "A4", "pcs", 60, 100));
-        put(new Supply("SUP-007", "Lamination Film Pouch", "Lamination Film", "Long", "pcs", 0, 50));
-        put(new Supply("SUP-008", "Glossy Photo Paper 180gsm", "Photo Paper", "A4", "sheets", 90, 50));
-        put(new Supply("SUP-009", "Glossy Photo Paper 180gsm", "Photo Paper", "4R", "sheets", 140, 100));
-        put(new Supply("SUP-010", "Lamination Film Pouch", "Lamination Film", "Short", "pcs", 120, 100));
-
-        pending.add(new JobOrder(229, "Maria Santos", Service.ID_PICTURE, PaperSize.A4, 1, 3, false, LocalTime.of(10, 15)));
-        pending.add(new JobOrder(230, "Pedro Bautista", Service.BW, PaperSize.LONG, 25, 10, false, LocalTime.of(10, 31)));
-        pending.add(new JobOrder(231, "Juan Dela Cruz", Service.COLORED, PaperSize.A4, 12, 5, true, LocalTime.of(10, 42)));
-        pending.add(new JobOrder(232, "BU College of Science", Service.LAMINATION, PaperSize.A4, 20, 1, false, LocalTime.of(10, 50)));
-        pending.add(new JobOrder(233, "Ana Reyes", Service.BW, PaperSize.SHORT, 40, 2, true, LocalTime.of(10, 58)));
-        pending.add(new JobOrder(234, "Grace Villanueva", Service.BW, PaperSize.A4, 8, 1, false, LocalTime.of(11, 5)));
-        pending.add(new JobOrder(235, "Ramon Cruz", Service.COLORED, PaperSize.SHORT, 4, 2, false, LocalTime.of(11, 12)));
-
-        JobOrder busy = new JobOrder(228, "Carlo Mendoza", Service.COLORED, PaperSize.A4, 30, 3, false, LocalTime.of(9, 48));
-        busy.setStatus(JobStatus.PROCESSING);
-        processing.add(busy);
-
-        done(new JobOrder(227, "Rina Aquino", Service.BW, PaperSize.A4, 5, 1, false, LocalTime.of(9, 30)));
-        done(new JobOrder(226, "Sofia Navarro", Service.BW, PaperSize.LONG, 14, 10, false, LocalTime.of(9, 20)));
-        done(new JobOrder(224, "Mark Dizon", Service.BW, PaperSize.A4, 41, 7, false, LocalTime.of(9, 2)));
-        done(new JobOrder(222, "Elena Ramos", Service.COLORED, PaperSize.A4, 15, 6, false, LocalTime.of(8, 41)));
-        done(new JobOrder(220, "Jun Garcia", Service.ID_PICTURE, PaperSize.SHORT, 11, 1, false, LocalTime.of(8, 30)));
-
-        LocalDate today = LocalDate.now();
-        txn(421, today, 11, 12, "Ramon Cruz", 235, 80, PaymentMethod.CASH, null);
-        txn(420, today, 11, 5, "Grace Villanueva", 234, 16, PaymentMethod.CASH, null);
-        txn(419, today, 10, 58, "Ana Reyes", 233, 180, PaymentMethod.GCASH, "4021 553 981 204");
-        txn(418, today, 10, 50, "BU College of Science", 232, 500, PaymentMethod.GCASH, "4021 553 774 090");
-        txn(417, today, 10, 42, "Juan Dela Cruz", 231, 620, PaymentMethod.CASH, null);
-        txn(416, today, 10, 31, "Pedro Bautista", 230, 750, PaymentMethod.CASH, null);
-        txn(415, today, 10, 15, "Maria Santos", 229, 150, PaymentMethod.GCASH, "4021 553 120 388");
-        txn(414, today, 9, 48, "Carlo Mendoza", 228, 900, PaymentMethod.CASH, null);
-        txn(413, today, 9, 20, "Sofia Navarro", 226, 420, PaymentMethod.GCASH, "4021 552 906 417");
-        txn(412, today, 9, 2, "Mark Dizon", 224, 574, PaymentMethod.CASH, null);
-        txn(411, today, 8, 41, "Elena Ramos", 222, 900, PaymentMethod.CASH, null);
-        txn(410, today, 8, 30, "Jun Garcia", 220, 550, PaymentMethod.GCASH, "4021 552 331 765");
-
-        waste(today, 11, 2, "SUP-003", 3, WasteReason.PAPER_JAM, "JOB-0230");
-        waste(today, 9, 40, "SUP-005", 9, WasteReason.MISPRINT, "JOB-0224");
-        waste(today.minusDays(1), 16, 15, "SUP-008", 2, WasteReason.MISPRINT, "JOB-0221");
-        waste(today.minusDays(1), 14, 30, "SUP-006", 4, WasteReason.DAMAGED, "JOB-0219");
-        waste(today.minusDays(3), 15, 5, "SUP-001", 6, WasteReason.PAPER_JAM, "JOB-0212");
-        waste(today.minusDays(4), 10, 20, "SUP-002", 5, WasteReason.PAPER_JAM, "JOB-0210");
-        waste(today.minusDays(5), 13, 45, "SUP-003", 5, WasteReason.DAMAGED, null);
+    public Transaction transactionFor(JobOrder job) {
+        return payments.transactionFor(job);
     }
 
-    private void put(Supply s) {
-        supplies.put(s.getId(), s);
-    }
-
-    private void done(JobOrder job) {
-        job.setStatus(JobStatus.COMPLETED);
-        completed.add(job);
-    }
-
-    private void txn(int no, LocalDate day, int hour, int minute, String customer, int jobNo,
-            double amount, PaymentMethod method, String ref) {
-        transactions.add(new Transaction(String.format("TXN-%04d", no), day.atTime(hour, minute), customer,
-                String.format("JOB-%04d", jobNo), amount, method, ref));
-    }
-
-    private void waste(LocalDate day, int hour, int minute, String supplyId, int qty, WasteReason reason, String jobId) {
-        waste.add(new WasteRecord(day.atTime(hour, minute), supplies.get(supplyId), qty, reason, jobId));
+    /** The receipt for a transaction, or null if its job cannot be found. */
+    public Receipt receipt(Transaction transaction) {
+        for (JobOrder j : queue.all()) {
+            if (j.getId().equals(transaction.getJobId())) {
+                return payments.receipt(transaction, j);
+            }
+        }
+        return null;
     }
 }

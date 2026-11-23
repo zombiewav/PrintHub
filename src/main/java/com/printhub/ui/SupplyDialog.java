@@ -65,7 +65,7 @@ public class SupplyDialog extends javax.swing.JDialog {
             editing.setUnit((String) unitBox.getSelectedItem());
             editing.setStock((Integer) stockSpinner.getValue());
             editing.setReorderLevel((Integer) reorderSpinner.getValue());
-            data.changed();
+            data.updateSupply(editing);
         }
         dispose();
     }

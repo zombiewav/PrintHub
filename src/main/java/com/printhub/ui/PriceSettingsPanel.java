@@ -143,7 +143,12 @@ public class PriceSettingsPanel extends javax.swing.JPanel implements Refreshabl
             }
         }
         prices.setRushFee(fee);
-        data.changed();
+        try {
+            data.savePrices();
+        } catch (SecurityException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Cannot save", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         JOptionPane.showMessageDialog(this, "Prices saved. New orders will use them right away.", "Saved",
                 JOptionPane.INFORMATION_MESSAGE);
     }

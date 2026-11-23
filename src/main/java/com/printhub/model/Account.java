@@ -15,19 +15,6 @@ public class Account {
         this.roleType = roleType;
     }
 
-    /**
-     * Temporary: the old in-memory data class builds accounts with a plain password and a role name.
-     * Removed when PrintHubData moves to the database.
-     */
-    public Account(String username, String password, String fullName, String role) {
-        this(username, password, fullName, "Admin".equalsIgnoreCase(role) ? Role.ADMIN : Role.STAFF);
-    }
-
-    /** Temporary plain-text check for the old in-memory data class. */
-    public boolean matches(String username, String password) {
-        return this.username.equalsIgnoreCase(username) && this.passwordHash.equals(password);
-    }
-
     public String getUsername() {
         return username;
     }
