@@ -46,6 +46,11 @@ public class StockEstimate {
             return !used || available >= required;
         }
 
+        /** Stock left once this order is done (what is available now when the order does not use it). */
+        public int getRemainingAfter() {
+            return used ? available - required : available;
+        }
+
         public int shortBy() {
             return used ? Math.max(0, required - available) : 0;
         }
