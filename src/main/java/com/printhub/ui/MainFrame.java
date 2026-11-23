@@ -2,6 +2,7 @@ package com.printhub.ui;
 
 import com.printhub.data.PrintHubData;
 import com.printhub.model.Account;
+import com.printhub.model.Permission;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -23,7 +24,18 @@ public class MainFrame extends javax.swing.JFrame {
         setIconImage(Ui.appIcon());
         cards = (CardLayout) contentPanel.getLayout();
 
+        boolean reportsAllowed = user.getRoleType().allows(Permission.VIEW_REPORTS);
+        boolean accountsAllowed = user.getRoleType().allows(Permission.MANAGE_ACCOUNTS);
+        sidebar.addNav("suppliers", "Suppliers", "restock");
+        if (reportsAllowed) {
+            sidebar.addNav("reports", "Reports", "peso");
+        }
+        if (accountsAllowed) {
+            sidebar.addNav("accounts", "Accounts", "user");
+        }
+        sidebar.addChangePassword(() -> new ChangePasswordDialog(this, user.getUsername(), true).open());
         sidebar.init(user, this::show, () -> {
+            data.logout();
             dispose();
             onLogout.run();
         });
@@ -35,6 +47,13 @@ public class MainFrame extends javax.swing.JFrame {
         register("inventory", new InventoryPanel());
         register("sales", new SalesPanel());
         register("prices", new PriceSettingsPanel());
+        register("suppliers", new SuppliersPanel());
+        if (reportsAllowed) {
+            register("reports", new ReportsPanel());
+        }
+        if (accountsAllowed) {
+            register("accounts", new AccountsPanel());
+        }
 
         getContentPane().setPreferredSize(new Dimension(1280, 720));
         setMinimumSize(new Dimension(1100, 640));

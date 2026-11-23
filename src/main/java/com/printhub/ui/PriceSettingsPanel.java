@@ -23,11 +23,14 @@ public class PriceSettingsPanel extends javax.swing.JPanel implements Refreshabl
     private static final PaperSize[] SIZES = PaperSize.values();
 
     private final PrintHubData data = PrintHubData.get();
+    /** Only admins may change prices; staff see them read-only. */
+    private final boolean editable = data.currentUser() != null
+            && data.currentUser().getRoleType().allows(com.printhub.model.Permission.EDIT_PRICES);
     private final DefaultTableModel model = new DefaultTableModel(
             new String[] {"Service", "Charged", "A4", "Short", "Long"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
-            return column >= 2;
+            return editable && column >= 2;
         }
     };
 
@@ -48,6 +51,11 @@ public class PriceSettingsPanel extends javax.swing.JPanel implements Refreshabl
 
         revertButton.addActionListener(e -> refresh());
         saveButton.addActionListener(e -> save());
+        if (!editable) {
+            rushFeeField.setEditable(false);
+            revertButton.setEnabled(false);
+            saveButton.setEnabled(false);
+        }
         refresh();
     }
 

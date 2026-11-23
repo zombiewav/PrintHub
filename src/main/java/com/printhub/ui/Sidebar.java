@@ -1,10 +1,18 @@
 package com.printhub.ui;
 
 import com.printhub.model.Account;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 /** Left navigation: brand, six screens, signed-in user and Logout. 220 px wide. */
 public class Sidebar extends javax.swing.JPanel {
@@ -25,6 +33,39 @@ public class Sidebar extends javax.swing.JPanel {
     private void register(String key, NavButton button) {
         group.add(button);
         buttons.put(key, button);
+    }
+
+    private JPanel extraNav;
+    private JButton changePasswordButton;
+
+    /** Adds a navigation button under the six built in the form. Call before {@link #init}. */
+    public void addNav(String key, String text, String iconName) {
+        if (extraNav == null) {
+            extraNav = new JPanel(new GridLayout(0, 1, 0, 4));
+            extraNav.setOpaque(false);
+            extraNav.setBorder(new EmptyBorder(4, 8, 0, 8));
+            navFiller.add(extraNav, BorderLayout.NORTH);
+        }
+        NavButton button = new NavButton();
+        button.setText(text);
+        button.setIconName(iconName);
+        button.setPreferredSize(new Dimension(203, 40));
+        extraNav.add(button);
+        register(key, button);
+    }
+
+    /** Adds a "Change password" button under Logout. */
+    public void addChangePassword(Runnable action) {
+        changePasswordButton = Ui.secondary("Change password");
+        Ui.sized(changePasswordButton, 32);
+        changePasswordButton.addActionListener(e -> action.run());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 2;
+        c.gridwidth = 2;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(0, 16, 16, 16);
+        userPanel.add(changePasswordButton, c);
     }
 
     /** Shows who is signed in and wires the navigation and Logout buttons. */

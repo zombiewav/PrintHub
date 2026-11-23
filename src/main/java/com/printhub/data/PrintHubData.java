@@ -24,6 +24,7 @@ import com.printhub.service.OrderService;
 import com.printhub.service.PaymentService;
 import com.printhub.service.PricingService;
 import com.printhub.service.ReportService;
+import com.printhub.service.Session;
 import com.printhub.service.StockEstimator;
 import com.printhub.service.SupplierService;
 import java.awt.EventQueue;
@@ -135,6 +136,11 @@ public final class PrintHubData {
 
     public void logout() {
         accounts.logout();
+    }
+
+    /** The signed-in account, or null. */
+    public Account currentUser() {
+        return Session.current();
     }
 
     // ---- Prices and discounts ---------------------------------------------------------------
