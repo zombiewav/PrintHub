@@ -163,6 +163,18 @@ class PrintHubDataTest {
     }
 
     @Test
+    void cancelledPaidJobIsLeftOutOfTheSalesList() {
+        JobOrder ramon = data.pendingJobs().stream().filter(j -> j.getNumber() == 235).findFirst().get();
+        assertEquals(12, data.transactions().size());
+        data.cancelJob(ramon);
+        assertEquals(11, data.transactions().size());
+        assertTrue(data.transactions().stream().noneMatch(t -> t.getJobId().equals("JOB-0235")));
+        // the void payment is still on record for audits and reports
+        assertEquals(12, data.payments().transactions().size());
+        assertEquals(PaymentStatus.VOID, data.transactionFor(ramon).getStatus());
+    }
+
+    @Test
     void listenersAreNotifiedOnChange() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         data.addListener(latch::countDown);

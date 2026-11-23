@@ -7,6 +7,7 @@ import com.printhub.model.Discount;
 import com.printhub.model.JobOrder;
 import com.printhub.model.PaperSize;
 import com.printhub.model.PaymentMethod;
+import com.printhub.model.PaymentStatus;
 import com.printhub.model.PriceTable;
 import com.printhub.model.Receipt;
 import com.printhub.model.Restock;
@@ -336,8 +337,18 @@ public final class PrintHubData {
 
     // ---- Sales ------------------------------------------------------------------------------
 
+    /**
+     * Valid payments, newest first. The Sales and Dashboard screens add these up, so payments voided by a
+     * cancelled job are left out (they stay in the database and in payments().transactions()).
+     */
     public List<Transaction> transactions() {
-        return payments.transactions();
+        List<Transaction> valid = new ArrayList<>();
+        for (Transaction t : payments.transactions()) {
+            if (t.getStatus() == PaymentStatus.PAID) {
+                valid.add(t);
+            }
+        }
+        return valid;
     }
 
     public Transaction transactionFor(JobOrder job) {
