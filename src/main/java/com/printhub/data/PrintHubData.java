@@ -245,6 +245,11 @@ public final class PrintHubData {
         return orders.estimate(service, size, quantity);
     }
 
+    /** The price of an order, worked out by the same code that charges it. */
+    public double quote(Service service, PaperSize size, int pages, int copies, boolean rush, Discount discount) {
+        return orders.quote(service, size, pages, copies, rush, discount);
+    }
+
     /** Takes a counter order with no discount; cash is taken as exactly the total. */
     public JobOrder placeOrder(String customer, Service service, PaperSize size, int pages, int copies,
             boolean rush, PaymentMethod method, String reference) {

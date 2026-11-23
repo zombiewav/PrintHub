@@ -3,20 +3,26 @@ package com.printhub.ui;
 import static com.printhub.ui.PrintHubTheme.*;
 
 import com.printhub.data.PrintHubData;
+import com.printhub.model.Discount;
 import com.printhub.model.JobOrder;
 import com.printhub.model.PaperSize;
 import com.printhub.model.PaymentMethod;
+import com.printhub.model.Receipt;
 import com.printhub.model.Service;
 import com.printhub.model.StockEstimate;
+import com.printhub.model.Transaction;
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
@@ -30,8 +36,14 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
     private final ButtonGroup payGroup = new ButtonGroup();
     private final CardLayout payCards;
 
+    private static final String NO_DISCOUNT = "No discount";
+
+    private final JComboBox<Object> discountBox = Ui.combo(new JComboBox<>());
+    private final JLabel discountValueLabel = Ui.label(" ", FONT_BODY_BOLD, TEXT);
+
     private double currentTotal;
     private boolean stockOk = true;
+    private boolean loadingDiscounts;
 
     public NewOrderPanel() {
         initComponents();
@@ -39,9 +51,48 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         payGroup.add(cashRadio);
         payGroup.add(gcashRadio);
         stockRows.setLayout(new BoxLayout(stockRows, BoxLayout.Y_AXIS));
+        addDiscountControls();
 
         wire();
         refresh();
+    }
+
+    /** The discount picker goes under the rush hint and its amount under the rush fee (both in the empty filler panels). */
+    private void addDiscountControls() {
+        JPanel picker = Ui.panel(new BorderLayout(0, 4));
+        picker.setBorder(new EmptyBorder(16, 0, 0, 0));
+        picker.add(Ui.caption("Discount"), BorderLayout.NORTH);
+        picker.add(discountBox, BorderLayout.CENTER);
+        detailsFiller.add(picker, BorderLayout.NORTH);
+
+        JPanel row = Ui.panel(new BorderLayout());
+        row.setBorder(new EmptyBorder(5, 0, 5, 0));
+        row.add(Ui.label("Discount", FONT_BODY, TEXT_SECONDARY), BorderLayout.WEST);
+        row.add(discountValueLabel, BorderLayout.EAST);
+        priceFiller.add(row, BorderLayout.NORTH);
+    }
+
+    private void loadDiscounts() {
+        Object keep = discountBox.getSelectedItem();
+        loadingDiscounts = true;
+        discountBox.removeAllItems();
+        discountBox.addItem(NO_DISCOUNT);
+        for (Discount d : data.discounts()) {
+            discountBox.addItem(d);
+        }
+        for (int i = 0; i < discountBox.getItemCount(); i++) {
+            Object item = discountBox.getItemAt(i);
+            if (item instanceof Discount && keep instanceof Discount
+                    && ((Discount) item).getName().equals(((Discount) keep).getName())) {
+                discountBox.setSelectedIndex(i);
+            }
+        }
+        loadingDiscounts = false;
+    }
+
+    private Discount selectedDiscount() {
+        Object item = discountBox.getSelectedItem();
+        return item instanceof Discount ? (Discount) item : null;
     }
 
     // ---- Behaviour --------------------------------------------------------------------------
@@ -52,6 +103,11 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         pagesSpinner.addChangeListener(e -> recalc());
         copiesSpinner.addChangeListener(e -> recalc());
         rushCheck.addActionListener(e -> recalc());
+        discountBox.addActionListener(e -> {
+            if (!loadingDiscounts) {
+                recalc();
+            }
+        });
         cashRadio.addActionListener(e -> payCards.show(payFields, "cash"));
         gcashRadio.addActionListener(e -> payCards.show(payFields, "gcash"));
         tenderedField.getDocument().addDocumentListener(new DocumentListener() {
@@ -77,6 +133,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
     @Override
     public void refresh() {
         orderNoLabel.setText("Order No. " + data.nextOrderId());
+        loadDiscounts();
         recalc();
     }
 
@@ -86,11 +143,23 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         int p = (Integer) pagesSpinner.getValue();
         int c = (Integer) copiesSpinner.getValue();
         boolean isRush = rushCheck.isSelected();
+        Discount discount = selectedDiscount();
 
         double unit = data.prices().get(s, z);
         double sub = unit * p * c;
+        double off = discount == null ? 0 : discount.amountOff(sub);
         double fee = isRush ? data.prices().getRushFee() : 0;
-        currentTotal = sub + fee;
+        try {
+            currentTotal = data.quote(s, z, p, c, isRush, discount);
+        } catch (IllegalArgumentException tooMany) {
+            currentTotal = 0;
+            stockOk = false;
+            stockBanner.setColors(INSUFFICIENT[0], null);
+            stockBannerText.setForeground(INSUFFICIENT[1]);
+            stockBannerText.setText(tooMany.getMessage());
+            placeButton.setEnabled(false);
+            return;
+        }
 
         priceTitleLabel.setText(s.label() + " " + Ui.DOT + " " + z.label());
         unitPriceLabel.setText(Ui.money(unit));
@@ -98,6 +167,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         copiesValueLabel.setText(Ui.TIMES + " " + c);
         subtotalLabel.setText(Ui.money(sub));
         rushFeeLabel.setText(Ui.money(fee));
+        discountValueLabel.setText(off > 0 ? "-" + Ui.money(off) : Ui.money(0));
         totalLabel.setText(Ui.money(currentTotal));
         sheetsLabel.setText(Ui.count(p * c) + " sheets in total");
         amountDueLabel.setText(Ui.money(currentTotal));
@@ -201,6 +271,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         pagesSpinner.setValue(1);
         copiesSpinner.setValue(1);
         rushCheck.setSelected(false);
+        discountBox.setSelectedIndex(0);
         cashRadio.setSelected(true);
         payCards.show(payFields, "cash");
         tenderedField.setText("");
@@ -212,9 +283,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
     private void placeOrder() {
         String name = customerField.getText().trim();
         if (name.isEmpty()) {
-            warn("Enter the customer name.");
-            customerField.requestFocusInWindow();
-            return;
+            name = "Walk-in"; // anonymous customers are allowed
         }
         PaymentMethod method = cashRadio.isSelected() ? PaymentMethod.CASH : PaymentMethod.GCASH;
         String ref = null;
@@ -240,15 +309,26 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
             }
         }
 
-        JobOrder job = data.placeOrder(name, (Service) serviceBox.getSelectedItem(), (PaperSize) sizeBox.getSelectedItem(),
-                (Integer) pagesSpinner.getValue(), (Integer) copiesSpinner.getValue(), rushCheck.isSelected(), method, ref);
-
-        String message = "Order " + job.getId() + " placed for " + name + ".\nTotal: " + Ui.money(currentTotal);
-        if (method == PaymentMethod.CASH) {
-            message += "\nChange: " + Ui.money(paid - currentTotal);
+        JobOrder job;
+        try {
+            job = data.placeOrder(name, (Service) serviceBox.getSelectedItem(), (PaperSize) sizeBox.getSelectedItem(),
+                    (Integer) pagesSpinner.getValue(), (Integer) copiesSpinner.getValue(), rushCheck.isSelected(),
+                    selectedDiscount(), method, method == PaymentMethod.CASH ? paid : 0, ref);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            warn(ex.getMessage());
+            recalc();
+            return;
         }
-        JOptionPane.showMessageDialog(this, message, "Order placed", JOptionPane.INFORMATION_MESSAGE);
+
+        Transaction transaction = data.transactionFor(job);
+        Receipt receipt = transaction == null ? null : data.receipt(transaction);
         clearForm();
+        if (receipt != null) {
+            new ReceiptDialog(SwingUtilities.getWindowAncestor(this), receipt).open();
+        } else {
+            JOptionPane.showMessageDialog(this, "Order " + job.getId() + " placed.", "Order placed",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void warn(String message) {
