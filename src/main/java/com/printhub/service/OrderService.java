@@ -65,6 +65,34 @@ public class OrderService {
         }
     }
 
+    /** Most online orders that may wait unpaid at once, so strangers on the hotspot cannot flood the queue. */
+    public static final int MAX_WAITING_ONLINE = 20;
+
+    /**
+     * Takes an order a customer sent from their phone: B&amp;W or color printing only. It joins the queue unpaid
+     * and cannot be printed until staff marks it paid. The price is worked out here, never taken from the phone.
+     */
+    public JobOrder submitOnline(String customer, Service service, PaperSize size, int pages, int copies,
+            boolean rush, String filePath) {
+        synchronized (db.lock()) {
+            if (service != Service.BW && service != Service.COLORED) {
+                throw new IllegalArgumentException("Online orders are for black and white or colored printing only.");
+            }
+            double total = pricing.total(service, size, pages, copies, rush, null);
+            long waiting = queue.pending().stream().filter(j -> j.getSource() == JobSource.ONLINE
+                    && j.getPaymentStatus() == PaymentStatus.UNPAID).count();
+            if (waiting >= MAX_WAITING_ONLINE) {
+                throw new IllegalStateException("Too many online orders are waiting for payment. Please try again later.");
+            }
+            if (!estimate(service, size, pages * copies).isSufficient()) {
+                throw new IllegalStateException("Not enough stock for this order.");
+            }
+            String name = customer == null || customer.trim().isEmpty() ? "Online customer" : customer.trim();
+            return queue.submit(name, service, size, pages, copies, rush, JobSource.ONLINE, PaymentStatus.UNPAID,
+                    filePath, total, null);
+        }
+    }
+
     /** Staff confirms payment for a waiting (usually online) job so it can be printed. */
     public Transaction markPaid(JobOrder job, PaymentMethod method, double tendered, String reference) {
         synchronized (db.lock()) {

@@ -20,3 +20,6 @@ desktop.ini
 # Keep the repo Java-only
 *.md
 .claude/
+
+# Customer PDFs received through the hotspot portal
+uploads/

@@ -1,6 +1,7 @@
 package com.printhub.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -280,6 +281,31 @@ class JobQueueServiceTest {
         assertEquals(18, loaded.getTotal(), 0.0001);
         assertEquals(2, loaded.getDiscountAmount(), 0.0001);
         assertEquals("Student 10%", loaded.getDiscountName());
+    }
+
+    @Test
+    void cancellingAnOnlineJobDeletesItsUploadedFileButCompletingKeepsIt() throws Exception {
+        java.nio.file.Path cancelledFile = java.nio.file.Files.createTempFile("printhub-upload", ".pdf");
+        java.nio.file.Path keptFile = java.nio.file.Files.createTempFile("printhub-upload", ".pdf");
+        JobOrder toCancel = queue.submit("A", Service.BW, PaperSize.SHORT, 1, 1, false, JobSource.ONLINE,
+                PaymentStatus.UNPAID, cancelledFile.toString(), 2, null);
+        JobOrder toComplete = queue.submit("B", Service.BW, PaperSize.SHORT, 1, 1, false, JobSource.ONLINE,
+                PaymentStatus.PAID, keptFile.toString(), 2, null);
+        queue.cancel(toCancel);
+        queue.startNext();
+        queue.complete(toComplete);
+        assertFalse(java.nio.file.Files.exists(cancelledFile));
+        assertTrue(java.nio.file.Files.exists(keptFile));
+        java.nio.file.Files.deleteIfExists(keptFile);
+    }
+
+    @Test
+    void expiredUnpaidOnlineJobAlsoLosesItsFile() throws Exception {
+        java.nio.file.Path file = java.nio.file.Files.createTempFile("printhub-upload", ".pdf");
+        queue.submit("A", Service.BW, PaperSize.SHORT, 1, 1, false, JobSource.ONLINE, PaymentStatus.UNPAID,
+                file.toString(), 2, null);
+        assertEquals(1, queue.expireUnpaid(LocalDateTime.now().plusMinutes(31)));
+        assertFalse(java.nio.file.Files.exists(file));
     }
 
     @Test

@@ -211,7 +211,20 @@ public class JobQueueService {
             job.setStatus(JobStatus.CANCELLED);
             job.setCancelledAt(LocalDateTime.now());
             save(job);
+            deleteUpload(job);
             dispatch();
+        }
+    }
+
+    /** A cancelled online order no longer needs the customer's file. Best effort: a missing file is fine. */
+    private static void deleteUpload(JobOrder job) {
+        if (job.getFilePath() == null) {
+            return;
+        }
+        try {
+            java.nio.file.Files.deleteIfExists(java.nio.file.Path.of(job.getFilePath()));
+        } catch (java.io.IOException | RuntimeException ignored) {
+            // leave it; the file is only disk space
         }
     }
 

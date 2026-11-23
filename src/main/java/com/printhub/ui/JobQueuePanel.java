@@ -27,6 +27,8 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
     private final TabHeader cancelledTab;
     private final JButton markPaidButton = Ui.primary("Mark Paid");
     private final JButton cancelJobButton = Ui.danger(new JButton("Cancel Job"));
+    private final JButton openFileButton = Ui.secondary(new JButton("Open PDF"));
+    private final JButton portalButton = Ui.secondary(new JButton("Portal"));
 
     private List<JobOrder> pendingRows = new ArrayList<>();
     private List<JobOrder> processingRows = new ArrayList<>();
@@ -51,6 +53,18 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         right.gridy = 0;
         right.insets = new Insets(16, 0, 0, 0);
         footer.add(cancelJobButton, right);
+        right = new GridBagConstraints();
+        right.gridx = 6;
+        right.gridy = 0;
+        right.insets = new Insets(16, 8, 0, 0);
+        footer.add(openFileButton, right);
+        right = new GridBagConstraints();
+        right.gridx = 7;
+        right.gridy = 0;
+        right.insets = new Insets(16, 8, 0, 0);
+        footer.add(portalButton, right);
+        openFileButton.addActionListener(e -> openCustomerFile());
+        portalButton.addActionListener(e -> new PortalDialog(SwingUtilities.getWindowAncestor(this)).open());
         markPaidButton.addActionListener(e -> markPaid());
         cancelJobButton.addActionListener(e -> cancelJob());
         pendingJobs.getTable().getSelectionModel().addListSelectionListener(e -> updateButtons());
@@ -114,6 +128,19 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         markPaidButton.setEnabled(job != null && tabs.getSelectedIndex() == 0
                 && job.getPaymentStatus() == PaymentStatus.UNPAID);
         cancelJobButton.setEnabled(job != null);
+        openFileButton.setEnabled(job != null && job.getFilePath() != null);
+    }
+
+    private void openCustomerFile() {
+        JobOrder job = highlightedActiveJob();
+        if (job == null) {
+            return;
+        }
+        try {
+            data.openCustomerFile(job);
+        } catch (IllegalStateException | java.io.IOException ex) {
+            warn(ex.getMessage());
+        }
     }
 
     private void markPaid() {

@@ -1,6 +1,8 @@
 package com.printhub.data;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -172,6 +174,29 @@ class PrintHubDataTest {
         // the void payment is still on record for audits and reports
         assertEquals(12, data.payments().transactions().size());
         assertEquals(PaymentStatus.VOID, data.transactionFor(ramon).getStatus());
+    }
+
+    @Test
+    void theCustomerPortalStartsOnAFreePortAndStops() throws Exception {
+        assertFalse(data.isPortalRunning());
+        data.startPortal(0);
+        try {
+            assertTrue(data.isPortalRunning());
+            assertTrue(data.portalPort() > 0);
+        } finally {
+            data.stopPortal();
+        }
+        assertFalse(data.isPortalRunning());
+    }
+
+    @Test
+    void aCustomerFileOutsideTheUploadsFolderIsNeverOpened() {
+        JobOrder job = data.pendingJobs().get(0);
+        job.setFilePath(java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "somewhere-else", "x.pdf").toString());
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> data.openCustomerFile(job));
+        assertTrue(e.getMessage().contains("uploads folder"), e.getMessage());
+        job.setFilePath(null);
+        assertThrows(IllegalStateException.class, () -> data.openCustomerFile(job));
     }
 
     @Test
