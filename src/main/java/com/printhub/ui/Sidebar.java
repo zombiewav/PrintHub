@@ -22,6 +22,8 @@ public class Sidebar extends javax.swing.JPanel {
 
     public Sidebar() {
         initComponents();
+        // the form loads a small bitmap for Logout; replace it with the sharp vector icon
+        logoutButton.setIcon(Icons.get("logout", 16, PrintHubTheme.TEXT_SECONDARY));
         register("dashboard", navDashboard);
         register("order", navOrder);
         register("queue", navQueue);
