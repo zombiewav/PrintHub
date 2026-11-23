@@ -102,6 +102,48 @@ public final class Database {
         }
     }
 
+    private int transactionDepth;
+
+    /**
+     * Runs the work as one all-or-nothing unit: any RuntimeException rolls back every write made inside.
+     * Calls can nest; only the outermost one commits.
+     */
+    public void inTransaction(Runnable work) {
+        synchronized (lock) {
+            if (transactionDepth > 0) {
+                work.run();
+                return;
+            }
+            try {
+                connection.setAutoCommit(false);
+                transactionDepth = 1;
+                work.run();
+                connection.commit();
+            } catch (RuntimeException e) {
+                rollbackQuietly();
+                throw e;
+            } catch (SQLException e) {
+                rollbackQuietly();
+                throw new DataAccessException("Database error: " + e.getMessage(), e);
+            } finally {
+                transactionDepth = 0;
+                try {
+                    connection.setAutoCommit(true);
+                } catch (SQLException ignored) {
+                    // connection is unusable anyway
+                }
+            }
+        }
+    }
+
+    private void rollbackQuietly() {
+        try {
+            connection.rollback();
+        } catch (SQLException ignored) {
+            // nothing more we can do
+        }
+    }
+
     private static void bind(PreparedStatement ps, Object[] params) throws SQLException {
         for (int i = 0; i < params.length; i++) {
             ps.setObject(i + 1, params[i]);

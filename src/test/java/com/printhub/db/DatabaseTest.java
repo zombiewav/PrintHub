@@ -45,6 +45,30 @@ class DatabaseTest {
     }
 
     @Test
+    void failedTransactionRollsBackEveryWrite() {
+        Database db = Database.inMemory();
+        try {
+            db.inTransaction(() -> {
+                db.update("INSERT INTO setting(key,value) VALUES('a','1')");
+                throw new IllegalStateException("boom");
+            });
+        } catch (IllegalStateException expected) {
+            assertEquals("boom", expected.getMessage());
+        }
+        assertEquals(0, db.query("SELECT COUNT(*) FROM setting", rs -> rs.getInt(1)).get(0));
+    }
+
+    @Test
+    void nestedTransactionsCommitTogether() {
+        Database db = Database.inMemory();
+        db.inTransaction(() -> {
+            db.update("INSERT INTO setting(key,value) VALUES('a','1')");
+            db.inTransaction(() -> db.update("INSERT INTO setting(key,value) VALUES('b','2')"));
+        });
+        assertEquals(2, db.query("SELECT COUNT(*) FROM setting", rs -> rs.getInt(1)).get(0));
+    }
+
+    @Test
     void moneyRoundsToCentavos() {
         assertEquals(30, Money.toCentavos(0.1 + 0.2));
         assertEquals(12.5, Money.fromCentavos(1250), 0.0001);
