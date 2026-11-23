@@ -5,13 +5,16 @@ public class InventoryPanel extends javax.swing.JPanel implements Refreshable {
 
     private final SuppliesTab supplies = new SuppliesTab();
     private final WasteLogTab wasteLog = new WasteLogTab();
+    private final MovementsTab movements = new MovementsTab();
     private final TabHeader suppliesHeader;
     private final TabHeader wasteHeader;
+    private final TabHeader movementsHeader;
 
     public InventoryPanel() {
         initComponents();
         suppliesHeader = Ui.addTab(tabs, "Supplies", supplies, 0);
         wasteHeader = Ui.addTab(tabs, "Waste Log", wasteLog, 0);
+        movementsHeader = Ui.addTab(tabs, "Stock Movements", movements, 0);
         Ui.syncTabs(tabs);
         refresh();
     }
@@ -20,8 +23,10 @@ public class InventoryPanel extends javax.swing.JPanel implements Refreshable {
     public void refresh() {
         supplies.refresh();
         wasteLog.refresh();
+        movements.refresh();
         suppliesHeader.setCount(supplies.getTotal());
         wasteHeader.setCount(wasteLog.getTotal());
+        movementsHeader.setCount(movements.getTotal());
     }
 
     /** This method is called from within the constructor to initialize the form.

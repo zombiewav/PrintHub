@@ -175,6 +175,53 @@ class PrintHubDataTest {
     }
 
     @Test
+    void unitCostSetFromAScreenIsSavedAndCountsTowardsValuation() {
+        assertNotNull(data.authenticate("admin", "admin123"));
+        Supply paper = data.findSupply("SUP-001");
+        double before = data.reports().inventoryValuation();
+        paper.setUnitCost(paper.getUnitCost() + 1);
+        data.updateSupply(paper);
+        assertEquals(before + paper.getStock(), data.reports().inventoryValuation(), 0.001);
+        assertEquals(paper.getUnitCost(), new PrintHubData(db).findSupply("SUP-001").getUnitCost(), 0.0001);
+    }
+
+    @Test
+    void shopSettingsSavedFromAScreenTakeEffectImmediately() {
+        assertNotNull(data.authenticate("admin", "admin123"));
+        data.saveShopSettings(new com.printhub.service.SettingsService.ShopSettings(true, 2, 30, 1));
+        // with two printer slots and auto start on, the free slot picks up the next paid job at once
+        assertEquals(2, data.processingJobs().size());
+        assertEquals(2, data.shopSettings().printerSlots());
+    }
+
+    @Test
+    void discountsCanBeAddedAndDeletedByAnAdmin() {
+        assertNotNull(data.authenticate("admin", "admin123"));
+        data.addDiscount(new com.printhub.model.Discount("Promo", com.printhub.model.Discount.Kind.FIXED, 5));
+        assertTrue(data.discounts().stream().anyMatch(d -> d.getName().equals("Promo")));
+        data.deleteDiscount("Promo");
+        assertTrue(data.discounts().stream().noneMatch(d -> d.getName().equals("Promo")));
+    }
+
+    @Test
+    void customerListShowsSeededCustomersWithWhatTheyPaid() {
+        var list = data.customerSummaries("");
+        var juan = list.stream().filter(c -> c.name().equals("Juan Dela Cruz")).findFirst().get();
+        assertEquals(1, juan.jobs());
+        assertEquals(620, juan.spent(), 0.0001);
+        assertEquals(1, data.customerSummaries("juan").size());
+        assertEquals(1, data.customerJobs("Juan Dela Cruz").size());
+    }
+
+    @Test
+    void stockMovementsOfOneItemAreAvailableToScreens() {
+        data.restock(data.findSupply("SUP-001"), 10);
+        assertEquals(1, data.stockMovements(data.findSupply("SUP-001")).stream()
+                .filter(m -> m.getType() == com.printhub.model.MovementType.IN && m.getQty() == 10).count());
+        assertTrue(data.stockMovements(null).size() >= data.stockMovements(data.findSupply("SUP-001")).size());
+    }
+
+    @Test
     void listenersAreNotifiedOnChange() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         data.addListener(latch::countDown);

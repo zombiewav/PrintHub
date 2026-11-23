@@ -2,10 +2,16 @@ package com.printhub.ui;
 
 import com.printhub.data.PrintHubData;
 import com.printhub.model.PaymentMethod;
+import com.printhub.model.Receipt;
 import com.printhub.model.Transaction;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /** Sales & Payments: Cash and GCash totals, filters, and the transaction list. */
@@ -13,14 +19,24 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
 
     private final PrintHubData data = PrintHubData.get();
     private final DefaultTableModel model = Tables.model("Transaction ID", "Date / Time", "Customer", "Job ID",
-            "Amount", "Method", "GCash Ref #");
+            "Amount", "Method", "GCash Ref #", "Handled By");
+    /** The transactions in the table, in row order, so a row can be turned back into its receipt. */
+    private List<Transaction> shown = new ArrayList<>();
 
     public SalesPanel() {
         initComponents();
         table.setModel(model);
         Tables.prepare(table, new int[] {4}, new int[] {}, false);
-        Tables.widths(table, 120, 150, 190, 110, 110, 100, 170);
-        table.setRowSelectionAllowed(false);
+        Tables.widths(table, 110, 140, 180, 100, 100, 90, 160, 110);
+        table.setToolTipText("Double-click a row to see its receipt.");
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    showReceipt(table.rowAtPoint(e.getPoint()));
+                }
+            }
+        });
 
         applyButton.addActionListener(e -> refresh());
         resetButton.addActionListener(e -> reset());
@@ -42,6 +58,16 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         return ((Date) value).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
+    private void showReceipt(int row) {
+        if (row < 0 || row >= shown.size()) {
+            return;
+        }
+        Receipt receipt = data.receipt(shown.get(row));
+        if (receipt != null) {
+            new ReceiptDialog(SwingUtilities.getWindowAncestor(this), receipt).open();
+        }
+    }
+
     @Override
     public void refresh() {
         LocalDate start = toLocal(fromSpinner.getValue());
@@ -49,6 +75,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         Object selected = methodBox.getSelectedItem();
 
         model.setRowCount(0);
+        shown = new ArrayList<>();
         double total = 0;
         double cash = 0;
         double gcash = 0;
@@ -70,9 +97,11 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
                 gcash += t.getAmount();
                 gcashCount++;
             }
+            shown.add(t);
             model.addRow(new Object[] {t.getId(), t.getDateTime().format(Ui.DAY_TIME), t.getCustomer(), t.getJobId(),
                 Ui.money(t.getAmount()), t.getMethod().label(),
-                t.getReference() == null ? Ui.DASH : t.getReference()});
+                t.getReference() == null ? Ui.DASH : t.getReference(),
+                t.getHandledBy() == null ? Ui.DASH : t.getHandledBy()});
         }
 
         int cashPct = total == 0 ? 0 : (int) Math.round(cash * 100 / total);

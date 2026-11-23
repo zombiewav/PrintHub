@@ -13,12 +13,14 @@ import com.printhub.model.Receipt;
 import com.printhub.model.Restock;
 import com.printhub.model.Service;
 import com.printhub.model.StockEstimate;
+import com.printhub.model.StockMovement;
 import com.printhub.model.Supplier;
 import com.printhub.model.Supply;
 import com.printhub.model.Transaction;
 import com.printhub.model.WasteReason;
 import com.printhub.model.WasteRecord;
 import com.printhub.service.AccountService;
+import com.printhub.service.CustomerService;
 import com.printhub.service.InventoryService;
 import com.printhub.service.JobQueueService;
 import com.printhub.service.OrderService;
@@ -26,6 +28,7 @@ import com.printhub.service.PaymentService;
 import com.printhub.service.PricingService;
 import com.printhub.service.ReportService;
 import com.printhub.service.Session;
+import com.printhub.service.SettingsService;
 import com.printhub.service.StockEstimator;
 import com.printhub.service.SupplierService;
 import java.awt.EventQueue;
@@ -64,6 +67,8 @@ public final class PrintHubData {
     private final PaymentService payments;
     private final OrderService orders;
     private final ReportService reports;
+    private final SettingsService shopSettings;
+    private final CustomerService customers;
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
     /** Opens the services on a database, loading the sample shop if it is brand new. */
@@ -79,6 +84,8 @@ public final class PrintHubData {
         this.payments = new PaymentService(db);
         this.orders = new OrderService(db, queue, payments, pricing, estimator);
         this.reports = new ReportService(payments, inventory, suppliers, queue);
+        this.shopSettings = new SettingsService(db);
+        this.customers = new CustomerService(queue, payments);
     }
 
     /** Cancels unpaid online jobs that waited too long. Checked once a minute. */
@@ -158,6 +165,47 @@ public final class PrintHubData {
 
     public List<Discount> discounts() {
         return pricing.discounts();
+    }
+
+    /** Admin only. */
+    public void addDiscount(Discount discount) {
+        pricing.addDiscount(discount);
+        changed();
+    }
+
+    /** Admin only. */
+    public void deleteDiscount(String name) {
+        pricing.deleteDiscount(name);
+        changed();
+    }
+
+    // ---- Shop settings ----------------------------------------------------------------------
+
+    public SettingsService.ShopSettings shopSettings() {
+        return shopSettings.load();
+    }
+
+    /** Admin only. A free printer slot starts the next paid job right away if auto start was just turned on. */
+    public void saveShopSettings(SettingsService.ShopSettings settings) {
+        shopSettings.save(settings);
+        queue.dispatch();
+        changed();
+    }
+
+    // ---- Customers and stock history ----------------------------------------------------------
+
+    /** Customers whose name contains the text (blank for all), most recent visit first. */
+    public List<CustomerService.CustomerSummary> customerSummaries(String query) {
+        return customers.summaries(query);
+    }
+
+    public List<JobOrder> customerJobs(String name) {
+        return customers.jobsOf(name);
+    }
+
+    /** The stock movement history of one item, or of every item when null; newest first. */
+    public List<StockMovement> stockMovements(Supply supplyOrNull) {
+        return inventory.movements(supplyOrNull);
     }
 
     // ---- Supplies ---------------------------------------------------------------------------
