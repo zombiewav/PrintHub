@@ -17,14 +17,24 @@ import javax.swing.table.DefaultTableModel;
 public class SuppliesTab extends javax.swing.JPanel {
 
     private final PrintHubData data = PrintHubData.get();
-    private final DefaultTableModel model = Tables.model("Item ID", "Name", "Category", "Size", "Stock", "Reorder Level", "Status");
+    private final DefaultTableModel model = Tables.model("Item ID", "Name", "Category", "Size", "Stock", "Reorder Level",
+            "Unit Cost", "Status");
+    private final javax.swing.JButton costButton = Ui.secondary(new javax.swing.JButton("Set Unit Cost"));
     private List<Supply> shown = new ArrayList<>();
 
     public SuppliesTab() {
         initComponents();
         table.setModel(model);
-        Tables.prepare(table, new int[] {4, 5}, new int[] {6}, false);
-        Tables.widths(table, 90, 240, 140, 80, 120, 120, 90);
+        Tables.prepare(table, new int[] {4, 5, 6}, new int[] {7}, false);
+        Tables.widths(table, 90, 230, 130, 70, 110, 110, 100, 90);
+
+        Ui.sized(costButton, 32);
+        java.awt.GridBagConstraints costAt = new java.awt.GridBagConstraints();
+        costAt.gridx = 7;
+        costAt.gridy = 0;
+        costAt.insets = new java.awt.Insets(0, 8, 0, 0);
+        toolbar.add(costButton, costAt);
+        costButton.addActionListener(e -> setUnitCost());
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -91,6 +101,26 @@ public class SuppliesTab extends javax.swing.JPanel {
         }
     }
 
+    /** What one unit cost the shop. Used for the inventory valuation in Reports. */
+    private void setUnitCost() {
+        Supply s = selected();
+        if (s == null) {
+            return;
+        }
+        String answer = JOptionPane.showInputDialog(this, "Cost of one " + s.getUnit().replaceAll("s$", "") + " of\n"
+                + s.displayName() + " (" + Ui.PESO + "):", Ui.plain(s.getUnitCost()), JOptionPane.PLAIN_MESSAGE);
+        if (answer == null) {
+            return;
+        }
+        double cost = Ui.parseAmount(answer);
+        if (cost < 0) {
+            JOptionPane.showMessageDialog(this, "Enter the cost as a number.", "Cannot save", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        s.setUnitCost(cost);
+        data.updateSupply(s);
+    }
+
     private void delete() {
         Supply s = selected();
         if (s == null) {
@@ -123,7 +153,8 @@ public class SuppliesTab extends javax.swing.JPanel {
             }
             shown.add(s);
             model.addRow(new Object[] {s.getId(), s.getName(), s.getCategory(), s.getSize(),
-                Ui.count(s.getStock()) + " " + s.getUnit(), Ui.count(s.getReorderLevel()), s.status()});
+                Ui.count(s.getStock()) + " " + s.getUnit(), Ui.count(s.getReorderLevel()),
+                Ui.money(s.getUnitCost()), s.status()});
             if (s.status().equals("Low")) {
                 low++;
             } else if (s.status().equals("Out")) {

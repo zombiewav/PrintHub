@@ -8,10 +8,13 @@ import com.printhub.model.PriceTable;
 import com.printhub.model.Service;
 import java.awt.Component;
 import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -55,6 +58,16 @@ public class PriceSettingsPanel extends javax.swing.JPanel implements Refreshabl
             rushFeeField.setEditable(false);
             revertButton.setEnabled(false);
             saveButton.setEnabled(false);
+        } else {
+            // admin tools sit on the left of the Revert / Save row
+            JButton discounts = Ui.secondary(new JButton("Manage Discounts"));
+            JButton settings = Ui.secondary(new JButton("Shop Settings"));
+            discounts.addActionListener(e -> new DiscountsDialog(SwingUtilities.getWindowAncestor(this)).open());
+            settings.addActionListener(e -> new ShopSettingsDialog(SwingUtilities.getWindowAncestor(this)).open());
+            JPanel tools = Ui.flow(java.awt.FlowLayout.LEFT, 8);
+            tools.add(discounts);
+            tools.add(settings);
+            buttonsSpacer.add(tools, java.awt.BorderLayout.WEST);
         }
         refresh();
     }

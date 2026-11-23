@@ -27,6 +27,7 @@ public class MainFrame extends javax.swing.JFrame {
         boolean reportsAllowed = user.getRoleType().allows(Permission.VIEW_REPORTS);
         boolean accountsAllowed = user.getRoleType().allows(Permission.MANAGE_ACCOUNTS);
         sidebar.addNav("suppliers", "Suppliers", "restock");
+        sidebar.addNav("customers", "Customers", "user");
         if (reportsAllowed) {
             sidebar.addNav("reports", "Reports", "peso");
         }
@@ -48,6 +49,7 @@ public class MainFrame extends javax.swing.JFrame {
         register("sales", new SalesPanel());
         register("prices", new PriceSettingsPanel());
         register("suppliers", new SuppliersPanel());
+        register("customers", new CustomersPanel());
         if (reportsAllowed) {
             register("reports", new ReportsPanel());
         }
