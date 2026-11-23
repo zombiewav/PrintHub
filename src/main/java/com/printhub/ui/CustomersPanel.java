@@ -118,7 +118,8 @@ public class CustomersPanel extends JPanel implements Refreshable {
         jobsTitle.setText("Jobs of " + name);
         for (JobOrder j : data.customerJobs(name)) {
             jobModel.addRow(new Object[] {j.getId(), j.getCreated().format(Ui.FULL_STAMP),
-                j.getService().label(), j.getSize().label(), j.pagesCopies(), j.getStatus().label(), j.getPaymentStatus().label(),
+                j.getDetail() == null ? j.getService().label() : j.getService().label() + " " + Ui.DOT + " " + j.getDetail(),
+                j.getSize().label(), j.pagesCopies(), j.getStatus().label(), j.getPaymentStatus().label(),
                 Ui.money(j.getTotal())});
         }
     }

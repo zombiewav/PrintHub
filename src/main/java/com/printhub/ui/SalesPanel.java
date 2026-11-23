@@ -19,7 +19,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
 
     private final PrintHubData data = PrintHubData.get();
     private final DefaultTableModel model = Tables.model("Transaction ID", "Date / Time", "Customer", "Job ID",
-            "Amount", "Method", "GCash Ref #", "Handled By");
+            "Amount", "Method", "GCash Ref #", "GCash Sender", "Handled By");
     /** The transactions in the table, in row order, so a row can be turned back into its receipt. */
     private List<Transaction> shown = new ArrayList<>();
 
@@ -27,7 +27,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         initComponents();
         table.setModel(model);
         Tables.prepare(table, new int[] {4}, new int[] {}, false);
-        Tables.widths(table, 110, 140, 180, 100, 100, 90, 160, 110);
+        Tables.widths(table, 110, 140, 170, 100, 100, 90, 150, 130, 110);
         table.setToolTipText("Double-click a row to see its receipt.");
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -101,6 +101,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
             model.addRow(new Object[] {t.getId(), t.getDateTime().format(Ui.DAY_TIME), t.getCustomer(), t.getJobId(),
                 Ui.money(t.getAmount()), t.getMethod().label(),
                 t.getReference() == null ? Ui.DASH : t.getReference(),
+                t.getSender() == null ? Ui.DASH : t.getSender(),
                 t.getHandledBy() == null ? Ui.DASH : t.getHandledBy()});
         }
 
