@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Works out which paper and ink an order needs and whether the shelf can cover it, counting
+ * Works out which materials an order needs and whether the shelf can cover it, counting
  * what pending and processing jobs have already claimed.
  */
 public class StockEstimator {
@@ -32,12 +32,20 @@ public class StockEstimator {
         return Math.max(1, settings.getInt("inkPerPage", 1));
     }
 
-    /** Materials one job uses: paper of its size, plus black and/or color ink depending on the service. */
+    /**
+     * Materials one job uses: bond paper, lamination film or photo paper depending on the service (scanning and
+     * binding use none), plus black and/or color ink.
+     */
     public Map<Supply, Integer> needs(Service service, PaperSize size, int quantity) {
         Map<Supply, Integer> needs = new LinkedHashMap<>();
-        Supply paper = inventory.findPaper(size);
-        if (paper != null) {
-            needs.put(paper, quantity);
+        Supply sheet = switch (service.material()) {
+            case PAPER -> inventory.findPaper(size);
+            case LAMINATION_FILM -> inventory.findFilm(size);
+            case PHOTO_PAPER -> inventory.findPhotoPaper(size);
+            case NONE -> null;
+        };
+        if (sheet != null) {
+            needs.put(sheet, quantity);
         }
         int ink = quantity * inkPerPage();
         if (service.usesBlackInk()) {
@@ -64,19 +72,27 @@ public class StockEstimator {
             }
         }
         int ink = quantity * inkPerPage();
+        Service.Material material = service.material();
 
         List<StockEstimate.Line> paper = new ArrayList<>();
         for (PaperSize z : PaperSize.values()) {
-            Supply s = inventory.findPaper(z);
-            boolean used = z == size;
-            paper.add(new StockEstimate.Line(z.label(), used, used ? quantity : 0, available(s, reserved), "sheets"));
+            boolean used = material == Service.Material.PAPER && z == size;
+            paper.add(new StockEstimate.Line(z.label(), used, used ? quantity : 0,
+                    available(inventory.findPaper(z), reserved), "sheets"));
         }
         List<StockEstimate.Line> inks = new ArrayList<>();
         inks.add(new StockEstimate.Line("Black ink", service.usesBlackInk(), service.usesBlackInk() ? ink : 0,
                 available(inventory.findInk(false), reserved), "pages"));
         inks.add(new StockEstimate.Line("Color ink", service.usesColorInk(), service.usesColorInk() ? ink : 0,
                 available(inventory.findInk(true), reserved), "pages"));
-        return new StockEstimate(paper, inks);
+        List<StockEstimate.Line> other = new ArrayList<>();
+        boolean film = material == Service.Material.LAMINATION_FILM;
+        boolean photo = material == Service.Material.PHOTO_PAPER;
+        other.add(new StockEstimate.Line("Lamination film", film, film ? quantity : 0,
+                available(inventory.findFilm(size), reserved), "pcs"));
+        other.add(new StockEstimate.Line("Photo paper", photo, photo ? quantity : 0,
+                available(inventory.findPhotoPaper(size), reserved), "sheets"));
+        return new StockEstimate(paper, inks, other);
     }
 
     private static int available(Supply supply, Map<Supply, Integer> reserved) {

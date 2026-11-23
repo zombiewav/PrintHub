@@ -261,6 +261,33 @@ public class InventoryService {
         return null;
     }
 
+    /** Lamination film pouches in the given size, or null. */
+    public Supply findFilm(PaperSize size) {
+        for (Supply s : supplies()) {
+            if (s.getCategory().equals("Lamination Film") && s.getSize().equals(size.label())) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    /** Photo paper in the given size; when there is none, the 4R photo paper (the usual ID picture sheet). */
+    public Supply findPhotoPaper(PaperSize size) {
+        Supply fallback = null;
+        for (Supply s : supplies()) {
+            if (!s.getCategory().equals("Photo Paper")) {
+                continue;
+            }
+            if (s.getSize().equals(size.label())) {
+                return s;
+            }
+            if (s.getSize().equals("4R")) {
+                fallback = s;
+            }
+        }
+        return fallback;
+    }
+
     public Supply findInk(boolean color) {
         for (Supply s : supplies()) {
             if (s.getCategory().equals("Ink") && s.getName().startsWith(color ? "Color" : "Black")) {

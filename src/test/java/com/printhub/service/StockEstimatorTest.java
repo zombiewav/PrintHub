@@ -29,6 +29,9 @@ class StockEstimatorTest {
     private Supply longPaper;
     private Supply black;
     private Supply color;
+    private Supply photoA4;
+    private Supply photo4R;
+    private Supply filmShort;
 
     @BeforeEach
     void setUp() {
@@ -40,6 +43,9 @@ class StockEstimatorTest {
         longPaper = inv.add(new Supply("SUP-003", "Bond Paper 70gsm", "Paper", "Long", "sheets", 180, 300));
         black = inv.add(new Supply("SUP-004", "Black Ink (Epson 003)", "Ink", Supply.NO_SIZE, "pages", 2400, 1000));
         color = inv.add(new Supply("SUP-005", "Color Ink Set (Epson 003)", "Ink", Supply.NO_SIZE, "pages", 420, 500));
+        photoA4 = inv.add(new Supply("SUP-008", "Glossy Photo Paper 180gsm", "Photo Paper", "A4", "sheets", 90, 50));
+        photo4R = inv.add(new Supply("SUP-009", "Glossy Photo Paper 180gsm", "Photo Paper", "4R", "sheets", 140, 100));
+        filmShort = inv.add(new Supply("SUP-010", "Lamination Film Pouch", "Lamination Film", "Short", "pcs", 100, 100));
     }
 
     private JobOrder job(int no, Service service, PaperSize size, int pages, int copies, JobStatus status) {
@@ -97,13 +103,63 @@ class StockEstimatorTest {
     }
 
     @Test
-    void unusedMaterialsAreNotCounted() {
+    void laminationUsesFilmOfTheSameSizeAndNoPaperOrInk() {
         Map<Supply, Integer> needs = estimator.needs(Service.LAMINATION, PaperSize.SHORT, 5);
         assertEquals(1, needs.size());
-        assertEquals(5, needs.get(shortPaper));
+        assertEquals(5, needs.get(filmShort));
         StockEstimate est = estimator.estimate(Service.LAMINATION, PaperSize.SHORT, 5, List.of());
+        assertTrue(line(est.getOther(), "Lamination film").isUsed());
+        assertEquals(5, line(est.getOther(), "Lamination film").getRequired());
+        assertEquals(95, line(est.getOther(), "Lamination film").getRemainingAfter());
+        assertFalse(line(est.getPaper(), "Short").isUsed());
         assertFalse(line(est.getInk(), "Black ink").isUsed());
         assertFalse(line(est.getInk(), "Color ink").isUsed());
+        assertFalse(line(est.getOther(), "Photo paper").isUsed());
+    }
+
+    @Test
+    void idPictureUsesPhotoPaperAndColorInkButNoBondPaper() {
+        Map<Supply, Integer> needs = estimator.needs(Service.ID_PICTURE, PaperSize.A4, 3);
+        assertEquals(2, needs.size());
+        assertEquals(3, needs.get(photoA4));
+        assertEquals(3, needs.get(color));
+        StockEstimate est = estimator.estimate(Service.ID_PICTURE, PaperSize.A4, 3, List.of());
+        assertTrue(line(est.getOther(), "Photo paper").isUsed());
+        assertEquals(87, line(est.getOther(), "Photo paper").getRemainingAfter());
+        assertFalse(line(est.getPaper(), "Short").isUsed());
+    }
+
+    @Test
+    void idPictureFallsBackTo4RPhotoPaperWhenNoPhotoPaperInThatSize() {
+        Map<Supply, Integer> needs = estimator.needs(Service.ID_PICTURE, PaperSize.SHORT, 2);
+        assertEquals(2, needs.get(photo4R));
+        assertNull(needs.get(photoA4));
+    }
+
+    @Test
+    void scanningAndBindingUseNoMaterialsSoTheyAlwaysFit() {
+        for (Service service : new Service[] {Service.SCANNING, Service.BINDING}) {
+            assertTrue(estimator.needs(service, PaperSize.A4, 1_000_000).isEmpty(), service.label());
+            StockEstimate est = estimator.estimate(service, PaperSize.A4, 1_000_000, List.of());
+            assertTrue(est.isSufficient(), service.label());
+        }
+    }
+
+    @Test
+    void photocopyingUsesPaperAndBlackInk() {
+        Map<Supply, Integer> needs = estimator.needs(Service.PHOTOCOPY, PaperSize.SHORT, 10);
+        assertEquals(10, needs.get(shortPaper));
+        assertEquals(10, needs.get(black));
+    }
+
+    @Test
+    void filmClaimedByQueuedLaminationJobsIsNotAvailableAgain() {
+        JobOrder active = job(1, Service.LAMINATION, PaperSize.SHORT, 90, 1, JobStatus.PENDING);
+        StockEstimate est = estimator.estimate(Service.LAMINATION, PaperSize.SHORT, 20, List.of(active));
+        StockEstimate.Line film = line(est.getOther(), "Lamination film");
+        assertEquals(10, film.getAvailable());
+        assertEquals(10, film.shortBy());
+        assertFalse(est.isSufficient());
     }
 
     @Test

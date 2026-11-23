@@ -28,7 +28,7 @@ public final class Database {
         }
     }
 
-    private static final int SCHEMA_VERSION = 1;
+    private static final int SCHEMA_VERSION = 2;
 
     private final Connection connection;
     private final Object lock = new Object();
@@ -173,13 +173,13 @@ public final class Database {
                 + " service TEXT NOT NULL, size TEXT NOT NULL, pages INTEGER NOT NULL, copies INTEGER NOT NULL,"
                 + " rush INTEGER NOT NULL, status TEXT NOT NULL, payment_status TEXT NOT NULL, source TEXT NOT NULL,"
                 + " file_path TEXT, total_centavos INTEGER NOT NULL DEFAULT 0, discount_name TEXT,"
-                + " discount_centavos INTEGER NOT NULL DEFAULT 0,"
+                + " discount_centavos INTEGER NOT NULL DEFAULT 0, detail TEXT,"
                 + " created_at TEXT NOT NULL, cancelled_at TEXT)",
             "CREATE TABLE IF NOT EXISTS payment (id TEXT PRIMARY KEY, time TEXT NOT NULL, customer TEXT NOT NULL,"
                 + " job_id TEXT NOT NULL, amount_centavos INTEGER NOT NULL, method TEXT NOT NULL, reference TEXT,"
                 + " status TEXT NOT NULL, discount_centavos INTEGER NOT NULL DEFAULT 0,"
                 + " tendered_centavos INTEGER NOT NULL DEFAULT 0, change_centavos INTEGER NOT NULL DEFAULT 0,"
-                + " handled_by TEXT)",
+                + " handled_by TEXT, sender TEXT)",
             "CREATE TABLE IF NOT EXISTS price (service TEXT NOT NULL, size TEXT NOT NULL,"
                 + " centavos INTEGER NOT NULL, PRIMARY KEY (service, size))",
             "CREATE TABLE IF NOT EXISTS discount (name TEXT PRIMARY KEY, kind TEXT NOT NULL, value REAL NOT NULL)"
@@ -193,6 +193,27 @@ public final class Database {
         }
         if (query("SELECT COUNT(*) FROM schema_version", rs -> rs.getInt(1)).get(0) == 0) {
             update("INSERT INTO schema_version(version) VALUES (?)", SCHEMA_VERSION);
+            return;
+        }
+        int version = query("SELECT version FROM schema_version", rs -> rs.getInt(1)).get(0);
+        if (version < SCHEMA_VERSION) {
+            migrate(version);
+            update("UPDATE schema_version SET version = ?", SCHEMA_VERSION);
+        }
+    }
+
+    /** Brings a database made by an older version of the app up to date, keeping its rows. */
+    private void migrate(int from) {
+        if (from < 2) {
+            addColumnIfMissing("job_order", "detail", "TEXT");   // ID picture size / binding type
+            addColumnIfMissing("payment", "sender", "TEXT");     // GCash sender number
+        }
+    }
+
+    private void addColumnIfMissing(String table, String column, String type) {
+        List<String> columns = query("PRAGMA table_info(" + table + ")", rs -> rs.getString("name"));
+        if (!columns.contains(column)) {
+            update("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
         }
     }
 }

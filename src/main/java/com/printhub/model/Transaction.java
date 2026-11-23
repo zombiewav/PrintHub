@@ -16,10 +16,19 @@ public class Transaction {
     private final double tendered;
     private final double change;
     private final String handledBy;
+    private final String sender;
 
     public Transaction(String id, LocalDateTime dateTime, String customer, String jobId,
             double amount, PaymentMethod method, String reference, PaymentStatus status,
             double discount, double tendered, double change, String handledBy) {
+        this(id, dateTime, customer, jobId, amount, method, reference, status, discount, tendered, change,
+                handledBy, null);
+    }
+
+    public Transaction(String id, LocalDateTime dateTime, String customer, String jobId,
+            double amount, PaymentMethod method, String reference, PaymentStatus status,
+            double discount, double tendered, double change, String handledBy, String sender) {
+        this.sender = sender;
         this.id = id;
         this.dateTime = dateTime;
         this.customer = customer;
@@ -90,6 +99,11 @@ public class Transaction {
 
     public double getChange() {
         return change;
+    }
+
+    /** The customer's GCash number that sent the money, or null for cash. */
+    public String getSender() {
+        return sender;
     }
 
     /** Username of the staff member who took the payment. */

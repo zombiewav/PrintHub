@@ -170,6 +170,17 @@ class InventoryServiceTest {
     }
 
     @Test
+    void findFilmAndPhotoPaperLookUpBySizeWithA4RFallbackForPhotoPaper() {
+        Supply film = inv.add(new Supply("SUP-006", "Lamination Film Pouch", "Lamination Film", "A4", "pcs", 60, 100));
+        Supply photoA4 = inv.add(new Supply("SUP-008", "Glossy Photo Paper", "Photo Paper", "A4", "sheets", 90, 50));
+        Supply photo4R = inv.add(new Supply("SUP-009", "Glossy Photo Paper", "Photo Paper", "4R", "sheets", 140, 100));
+        assertSame(film, inv.findFilm(PaperSize.A4));
+        assertNull(inv.findFilm(PaperSize.LONG));
+        assertSame(photoA4, inv.findPhotoPaper(PaperSize.A4));
+        assertSame(photo4R, inv.findPhotoPaper(PaperSize.LONG));
+    }
+
+    @Test
     void newIdContinuesAfterHighest() {
         assertEquals("SUP-003", inv.newId());
     }

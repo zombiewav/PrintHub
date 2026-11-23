@@ -20,9 +20,11 @@ public class MarkPaidDialog extends FormDialog {
     private final JTextField tenderedField = Ui.field(new JTextField());
     private final JLabel changeLabel = Ui.bold(Ui.money(0));
     private final JTextField referenceField = Ui.field(new JTextField());
+    private final JTextField senderField = Ui.field(new JTextField());
     private final JLabel tenderedCaption;
     private final JLabel changeCaption;
     private final JLabel referenceCaption;
+    private final JLabel senderCaption;
     private Transaction result;
 
     public MarkPaidDialog(Window owner, JobOrder job) {
@@ -34,6 +36,7 @@ public class MarkPaidDialog extends FormDialog {
         tenderedCaption = addRow("Cash received", tenderedField);
         changeCaption = addRow("Change", changeLabel);
         referenceCaption = addRow("GCash reference number", referenceField);
+        senderCaption = addRow("GCash number it was sent from", senderField);
 
         methodBox.addActionListener(e -> updateFields());
         tenderedField.getDocument().addDocumentListener(new DocumentListener() {
@@ -74,6 +77,8 @@ public class MarkPaidDialog extends FormDialog {
         changeLabel.setVisible(cash);
         referenceCaption.setVisible(!cash);
         referenceField.setVisible(!cash);
+        senderCaption.setVisible(!cash);
+        senderField.setVisible(!cash);
         pack();
     }
 
@@ -84,9 +89,13 @@ public class MarkPaidDialog extends FormDialog {
 
     private void save() {
         double tendered = isCash() ? Ui.parseAmount(tenderedField.getText()) : 0;
+        if (!isCash() && senderField.getText().trim().isEmpty()) {
+            warn("Enter the GCash number the payment was sent from.");
+            return;
+        }
         try {
             result = data.markPaid(job, (PaymentMethod) methodBox.getSelectedItem(), Math.max(0, tendered),
-                    referenceField.getText().trim());
+                    referenceField.getText().trim(), isCash() ? null : senderField.getText().trim());
             dispose();
         } catch (IllegalArgumentException | IllegalStateException ex) {
             warn(ex.getMessage());

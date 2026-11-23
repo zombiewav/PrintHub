@@ -266,15 +266,31 @@ public final class PrintHubData {
 
     public JobOrder placeOrder(String customer, Service service, PaperSize size, int pages, int copies,
             boolean rush, Discount discount, PaymentMethod method, double tendered, String reference) {
+        return placeOrder(customer, service, size, pages, copies, rush, discount, method, tendered, reference, null,
+                null);
+    }
+
+    /**
+     * Takes a counter order, also keeping the GCash sender number and the service detail (ID picture size and
+     * count, or the binding type).
+     */
+    public JobOrder placeOrder(String customer, Service service, PaperSize size, int pages, int copies,
+            boolean rush, Discount discount, PaymentMethod method, double tendered, String reference, String sender,
+            String detail) {
         JobOrder job = orders.placeWalkIn(customer, service, size, pages, copies, rush, discount, method, tendered,
-                reference);
+                reference, sender, detail);
         changed();
         return job;
     }
 
     /** Staff confirms a waiting job has been paid so it can be printed. */
     public Transaction markPaid(JobOrder job, PaymentMethod method, double tendered, String reference) {
-        Transaction t = orders.markPaid(job, method, tendered, reference);
+        return markPaid(job, method, tendered, reference, null);
+    }
+
+    public Transaction markPaid(JobOrder job, PaymentMethod method, double tendered, String reference,
+            String sender) {
+        Transaction t = orders.markPaid(job, method, tendered, reference, sender);
         changed();
         return t;
     }
