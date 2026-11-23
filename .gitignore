@@ -4,6 +4,10 @@ build/
 dist/
 *.class
 
+# Local database and executor scratch
+printhub.db
+.superpowers/
+
 # NetBeans private settings
 nbproject/private/
 nbactions-*.xml
