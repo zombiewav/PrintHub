@@ -12,6 +12,8 @@ public class Supply {
     private String unit;
     private int stock;
     private int reorderLevel;
+    private double unitCost;
+    private boolean active = true;
 
     public Supply(String id, String name, String category, String size, String unit, int stock, int reorderLevel) {
         this.id = id;
@@ -117,6 +119,24 @@ public class Supply {
 
     public void setReorderLevel(int reorderLevel) {
         this.reorderLevel = Math.max(0, reorderLevel);
+    }
+
+    /** What one unit cost the shop last time it was bought, in pesos. Used for inventory valuation. */
+    public double getUnitCost() {
+        return unitCost;
+    }
+
+    public void setUnitCost(double unitCost) {
+        this.unitCost = Math.max(0, unitCost);
+    }
+
+    /** False once the item has been deleted; its history is kept. */
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @Override

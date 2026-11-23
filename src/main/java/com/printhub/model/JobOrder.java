@@ -1,10 +1,12 @@
 package com.printhub.model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
  * One print job. Natural order is queue order: rush jobs first, then first come, first served
- * (the job number grows with every order), so a PriorityQueue of JobOrder always hands out
+ * (the job number grows with every order), so a heap of JobOrder always hands out
  * the right job next.
  */
 public class JobOrder implements Comparable<JobOrder> {
@@ -16,11 +18,23 @@ public class JobOrder implements Comparable<JobOrder> {
     private final int pages;
     private final int copies;
     private final boolean rush;
-    private final LocalTime received;
+    private final LocalDateTime created;
     private JobStatus status = JobStatus.PENDING;
+    private PaymentStatus paymentStatus = PaymentStatus.PAID;
+    private JobSource source = JobSource.WALK_IN;
+    private String filePath;
+    private double total;
+    private String discountName;
+    private LocalDateTime cancelledAt;
 
+    /** A job received today at the given time. */
     public JobOrder(int number, String customer, Service service, PaperSize size,
             int pages, int copies, boolean rush, LocalTime received) {
+        this(number, customer, service, size, pages, copies, rush, LocalDate.now().atTime(received));
+    }
+
+    public JobOrder(int number, String customer, Service service, PaperSize size,
+            int pages, int copies, boolean rush, LocalDateTime created) {
         this.number = number;
         this.customer = customer;
         this.service = service;
@@ -28,7 +42,7 @@ public class JobOrder implements Comparable<JobOrder> {
         this.pages = pages;
         this.copies = copies;
         this.rush = rush;
-        this.received = received;
+        this.created = created;
     }
 
     @Override
@@ -80,7 +94,11 @@ public class JobOrder implements Comparable<JobOrder> {
     }
 
     public LocalTime getReceived() {
-        return received;
+        return created.toLocalTime();
+    }
+
+    public LocalDateTime getCreated() {
+        return created;
     }
 
     public JobStatus getStatus() {
@@ -89,6 +107,56 @@ public class JobOrder implements Comparable<JobOrder> {
 
     public void setStatus(JobStatus status) {
         this.status = status;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public JobSource getSource() {
+        return source;
+    }
+
+    public void setSource(JobSource source) {
+        this.source = source;
+    }
+
+    /** Path of the customer's uploaded file, or null for walk-in jobs. */
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    /** What the customer owes (or paid) in pesos, after any discount. */
+    public double getTotal() {
+        return total;
+    }
+
+    public void setTotal(double total) {
+        this.total = total;
+    }
+
+    public String getDiscountName() {
+        return discountName;
+    }
+
+    public void setDiscountName(String discountName) {
+        this.discountName = discountName;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(LocalDateTime cancelledAt) {
+        this.cancelledAt = cancelledAt;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.printhub.model;
 
 public enum JobStatus {
-    PENDING("Pending"), PROCESSING("Processing"), COMPLETED("Completed");
+    PENDING("Pending"), PROCESSING("Processing"), COMPLETED("Completed"), CANCELLED("Cancelled");
 
     private final String label;
 

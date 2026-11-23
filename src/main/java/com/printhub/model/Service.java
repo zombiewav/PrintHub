@@ -5,7 +5,10 @@ public enum Service {
     BW("B&W Printing", "per page", true, false),
     COLORED("Colored Printing", "per page", false, true),
     LAMINATION("Lamination", "per piece", false, false),
-    ID_PICTURE("ID Picture", "per sheet", false, true);
+    ID_PICTURE("ID Picture", "per sheet", false, true),
+    PHOTOCOPY("Photocopying", "per page", true, false),
+    SCANNING("Scanning", "per page", false, false),
+    BINDING("Document Binding", "per piece", false, false);
 
     private final String label;
     private final String charged;
