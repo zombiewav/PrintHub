@@ -30,11 +30,11 @@ class UiSmokeTest {
             PrintHubData data = PrintHubData.get();
             assertNotNull(data.authenticate("admin", "admin123"));
             List<JPanel> screens = List.of(new DashboardPanel(key -> { }), new NewOrderPanel(), new JobQueuePanel(),
-                    new InventoryPanel(), new SalesPanel(), new PriceSettingsPanel(), new SuppliersPanel());
+                    new InventoryPanel(), new SalesPanel(), new PriceSettingsPanel(), new SuppliersPanel(), new ReportsPanel());
             for (JPanel screen : screens) {
                 ((Refreshable) screen).refresh();
             }
-            assertEquals(7, screens.size());
+            assertEquals(8, screens.size());
         });
     }
 }

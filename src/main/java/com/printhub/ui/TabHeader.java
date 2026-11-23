@@ -24,6 +24,12 @@ public final class TabHeader extends JPanel {
         setSelected(false);
     }
 
+    /** For tabs where a count makes no sense: hides the chip. */
+    public TabHeader withoutCount() {
+        chip.setVisible(false);
+        return this;
+    }
+
     public void setCount(int count) {
         chip.setText(String.valueOf(count));
     }
