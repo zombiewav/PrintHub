@@ -173,6 +173,7 @@ public final class Database {
                 + " service TEXT NOT NULL, size TEXT NOT NULL, pages INTEGER NOT NULL, copies INTEGER NOT NULL,"
                 + " rush INTEGER NOT NULL, status TEXT NOT NULL, payment_status TEXT NOT NULL, source TEXT NOT NULL,"
                 + " file_path TEXT, total_centavos INTEGER NOT NULL DEFAULT 0, discount_name TEXT,"
+                + " discount_centavos INTEGER NOT NULL DEFAULT 0,"
                 + " created_at TEXT NOT NULL, cancelled_at TEXT)",
             "CREATE TABLE IF NOT EXISTS payment (id TEXT PRIMARY KEY, time TEXT NOT NULL, customer TEXT NOT NULL,"
                 + " job_id TEXT NOT NULL, amount_centavos INTEGER NOT NULL, method TEXT NOT NULL, reference TEXT,"

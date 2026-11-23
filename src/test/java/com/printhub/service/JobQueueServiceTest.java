@@ -271,6 +271,18 @@ class JobQueueServiceTest {
     }
 
     @Test
+    void discountAndTotalSurviveRestart() {
+        JobOrder job = queue.submit("A", Service.BW, PaperSize.SHORT, 10, 1, false, JobSource.ONLINE,
+                PaymentStatus.UNPAID, null, 18, "Student 10%", 2);
+        JobQueueService reopened = new JobQueueService(db, inv, new StockEstimator(inv, settings), settings);
+        JobOrder loaded = reopened.pending().get(0);
+        assertEquals(job.getNumber(), loaded.getNumber());
+        assertEquals(18, loaded.getTotal(), 0.0001);
+        assertEquals(2, loaded.getDiscountAmount(), 0.0001);
+        assertEquals("Student 10%", loaded.getDiscountName());
+    }
+
+    @Test
     void allListsNewestNumberFirst() {
         JobOrder a = paid("A", false);
         JobOrder b = paid("B", false);

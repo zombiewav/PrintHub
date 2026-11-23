@@ -50,8 +50,8 @@ public class JobQueueService {
 
     private void load() {
         List<JobOrder> jobs = db.query("SELECT number, customer, service, size, pages, copies, rush, status,"
-                + " payment_status, source, file_path, total_centavos, discount_name, created_at, cancelled_at"
-                + " FROM job_order ORDER BY number", rs -> {
+                + " payment_status, source, file_path, total_centavos, discount_name, created_at, cancelled_at,"
+                + " discount_centavos FROM job_order ORDER BY number", rs -> {
                     JobOrder j = new JobOrder(rs.getInt(1), rs.getString(2), Service.valueOf(rs.getString(3)),
                             PaperSize.valueOf(rs.getString(4)), rs.getInt(5), rs.getInt(6), rs.getInt(7) == 1,
                             LocalDateTime.parse(rs.getString(14)));
@@ -61,6 +61,7 @@ public class JobQueueService {
                     j.setFilePath(rs.getString(11));
                     j.setTotal(Money.fromCentavos(rs.getLong(12)));
                     j.setDiscountName(rs.getString(13));
+                    j.setDiscountAmount(Money.fromCentavos(rs.getLong(16)));
                     if (rs.getString(15) != null) {
                         j.setCancelledAt(LocalDateTime.parse(rs.getString(15)));
                     }
@@ -97,9 +98,16 @@ public class JobQueueService {
         }
     }
 
-    /** Adds a job to the queue. A paid job is ready at once; an unpaid one waits for payment. */
+    /** Adds a job with no discount. See the longer overload. */
     public JobOrder submit(String customer, Service service, PaperSize size, int pages, int copies, boolean rush,
             JobSource source, PaymentStatus payment, String filePath, double total, String discountName) {
+        return submit(customer, service, size, pages, copies, rush, source, payment, filePath, total, discountName, 0);
+    }
+
+    /** Adds a job to the queue. A paid job is ready at once; an unpaid one waits for payment. */
+    public JobOrder submit(String customer, Service service, PaperSize size, int pages, int copies, boolean rush,
+            JobSource source, PaymentStatus payment, String filePath, double total, String discountName,
+            double discountAmount) {
         if (pages <= 0 || copies <= 0) {
             throw new IllegalArgumentException("Pages and copies must be more than zero.");
         }
@@ -116,11 +124,13 @@ public class JobQueueService {
             job.setFilePath(filePath);
             job.setTotal(total);
             job.setDiscountName(discountName);
+            job.setDiscountAmount(discountAmount);
             db.update("INSERT INTO job_order(number, customer, service, size, pages, copies, rush, status,"
-                    + " payment_status, source, file_path, total_centavos, discount_name, created_at)"
-                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", job.getNumber(), name, service.name(), size.name(),
-                    pages, copies, rush ? 1 : 0, JobStatus.PENDING.name(), payment.name(), source.name(), filePath,
-                    Money.toCentavos(total), discountName, job.getCreated().toString());
+                    + " payment_status, source, file_path, total_centavos, discount_name, discount_centavos,"
+                    + " created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", job.getNumber(), name, service.name(),
+                    size.name(), pages, copies, rush ? 1 : 0, JobStatus.PENDING.name(), payment.name(), source.name(),
+                    filePath, Money.toCentavos(total), discountName, Money.toCentavos(discountAmount),
+                    job.getCreated().toString());
             nextNumber++;
             byNumber.put(job.getNumber(), job);
             enqueue(job);

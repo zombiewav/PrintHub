@@ -25,6 +25,7 @@ public class JobOrder implements Comparable<JobOrder> {
     private String filePath;
     private double total;
     private String discountName;
+    private double discountAmount;
     private LocalDateTime cancelledAt;
 
     /** A job received today at the given time. */
@@ -141,6 +142,15 @@ public class JobOrder implements Comparable<JobOrder> {
 
     public void setTotal(double total) {
         this.total = total;
+    }
+
+    /** Pesos taken off the subtotal by the discount (0 when there is none). */
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
     }
 
     public String getDiscountName() {
