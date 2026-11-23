@@ -278,7 +278,7 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(16, 0, 0, 0);
         footer.add(reportWasteButton, gridBagConstraints);
 
-        summaryLabel.setText(" ");
+        summaryLabel.setText("3 pending jobs \u00b7 1 rush");
         summaryLabel.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         summaryLabel.setForeground(new java.awt.Color(75, 85, 99));
         summaryLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);

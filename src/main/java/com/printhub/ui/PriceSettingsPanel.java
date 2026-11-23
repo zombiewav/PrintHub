@@ -249,6 +249,35 @@ public class PriceSettingsPanel extends javax.swing.JPanel implements Refreshabl
 
         matrixScroll.setPreferredSize(new java.awt.Dimension(10, 224));
         com.printhub.ui.Ui.scroll(matrixScroll);
+        matrixTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
+            },
+            new String [] {
+                "Service", "Charged", "A4", "Short", "Long"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, true, true, true
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
 
         matrixScroll.setViewportView(matrixTable);
         matrixBody.add(matrixScroll, java.awt.BorderLayout.NORTH);

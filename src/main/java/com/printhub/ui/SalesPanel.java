@@ -179,7 +179,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         headerPanel.add(titleLabel, gridBagConstraints);
 
-        rangeLabel.setText(" ");
+        rangeLabel.setText("Nov 24, 2026 \u2013 Nov 24, 2026");
         rangeLabel.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -205,7 +205,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         totalCard.add(totalTitle, gridBagConstraints);
 
-        totalValue.setText(" ");
+        totalValue.setText("\u20b14,090.00");
         totalValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         totalValue.setForeground(new java.awt.Color(17, 24, 39));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -215,7 +215,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         totalCard.add(totalValue, gridBagConstraints);
 
-        totalNote.setText(" ");
+        totalNote.setText("12 transactions");
         totalNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         totalNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -259,7 +259,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         cashCard.add(cashTitle, gridBagConstraints);
 
-        cashValue.setText(" ");
+        cashValue.setText("\u20b12,570.00");
         cashValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         cashValue.setForeground(new java.awt.Color(17, 24, 39));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -269,7 +269,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         cashCard.add(cashValue, gridBagConstraints);
 
-        cashNote.setText(" ");
+        cashNote.setText("7 transactions \u00b7 63%");
         cashNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         cashNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -313,7 +313,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         gcashCard.add(gcashTitle, gridBagConstraints);
 
-        gcashValue.setText(" ");
+        gcashValue.setText("\u20b11,520.00");
         gcashValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         gcashValue.setForeground(new java.awt.Color(17, 24, 39));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -323,7 +323,7 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         gcashCard.add(gcashValue, gridBagConstraints);
 
-        gcashNote.setText(" ");
+        gcashNote.setText("5 transactions \u00b7 37%");
         gcashNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         gcashNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -449,6 +449,31 @@ public class SalesPanel extends javax.swing.JPanel implements Refreshable {
         card.add(filterBar, java.awt.BorderLayout.NORTH);
 
         com.printhub.ui.Ui.scroll(scroll);
+        table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "Transaction ID", "Date / Time", "Customer", "Job ID", "Amount", "Method", "GCash Ref #", "GCash Sender", "Handled By"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
 
         scroll.setViewportView(table);
         card.add(scroll, java.awt.BorderLayout.CENTER);

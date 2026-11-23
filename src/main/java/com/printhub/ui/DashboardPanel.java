@@ -228,6 +228,8 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         nextCard = new com.printhub.ui.CardPanel();
         nextHeading = new javax.swing.JLabel();
         nextBody = new javax.swing.JPanel();
+        nextSampleTitle = new javax.swing.JLabel();
+        nextSampleInfo = new javax.swing.JLabel();
         alertsCard = new com.printhub.ui.CardPanel();
         lowHeading = new javax.swing.JLabel();
         lowScroll = new javax.swing.JScrollPane();
@@ -303,7 +305,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         pendingCard.add(pendingTitle, gridBagConstraints);
 
-        pendingValue.setText(" ");
+        pendingValue.setText("7");
         pendingValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         pendingValue.setForeground(new java.awt.Color(17, 24, 39));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -313,7 +315,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         pendingCard.add(pendingValue, gridBagConstraints);
 
-        pendingNote.setText(" ");
+        pendingNote.setText("Waiting in the queue");
         pendingNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         pendingNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -357,7 +359,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         rushCard.add(rushTitle, gridBagConstraints);
 
-        rushValue.setText(" ");
+        rushValue.setText("2");
         rushValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         rushValue.setForeground(new java.awt.Color(194, 65, 12));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -367,7 +369,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         rushCard.add(rushValue, gridBagConstraints);
 
-        rushNote.setText(" ");
+        rushNote.setText("Served before regular jobs");
         rushNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         rushNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -411,7 +413,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         salesCard.add(salesTitle, gridBagConstraints);
 
-        salesValue.setText(" ");
+        salesValue.setText("\u20b14,090.00");
         salesValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         salesValue.setForeground(new java.awt.Color(17, 24, 39));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -421,7 +423,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         salesCard.add(salesValue, gridBagConstraints);
 
-        salesNote.setText(" ");
+        salesNote.setText("12 transactions");
         salesNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         salesNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -465,7 +467,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         lowCard.add(lowTitle, gridBagConstraints);
 
-        lowValue.setText(" ");
+        lowValue.setText("5");
         lowValue.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         lowValue.setForeground(new java.awt.Color(146, 64, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -475,7 +477,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 0, 0);
         lowCard.add(lowValue, gridBagConstraints);
 
-        lowNote.setText(" ");
+        lowNote.setText("Includes 1 out of stock");
         lowNote.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         lowNote.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -515,6 +517,23 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
 
         nextBody.setOpaque(false);
         nextBody.setLayout(new java.awt.GridBagLayout());
+        nextSampleTitle.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        nextSampleTitle.setText("JOB-0231 \u00b7 Juan Dela Cruz");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        nextBody.add(nextSampleTitle, gridBagConstraints);
+
+        nextSampleInfo.setText("Colored Printing \u00b7 A4 \u00b7 12 pages \u00d7 5 copies");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(8, 0, 0, 0);
+        nextBody.add(nextSampleInfo, gridBagConstraints);
         nextCard.add(nextBody, java.awt.BorderLayout.CENTER);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -535,6 +554,31 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         alertsCard.add(lowHeading, java.awt.BorderLayout.NORTH);
 
         com.printhub.ui.Ui.scroll(lowScroll);
+        lowTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Item", "Stock", "Reorder", "Status"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
 
         lowScroll.setViewportView(lowTable);
         alertsCard.add(lowScroll, java.awt.BorderLayout.CENTER);
@@ -564,7 +608,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         salesHead.add(salesHeading, gridBagConstraints);
 
-        salesTotalLabel.setText(" ");
+        salesTotalLabel.setText("\u20b14,090.00");
         salesTotalLabel.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -585,7 +629,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         salesRows.add(cashLabel, gridBagConstraints);
 
-        cashText.setText(" ");
+        cashText.setText("\u20b12,570.00 \u00b7 63%");
         cashText.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -595,6 +639,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
 
         cashBar.setForeground(new java.awt.Color(15, 118, 110));
         cashBar.setBorderPainted(false);
+        cashBar.setValue(63);
         cashBar.setValue(0);
         cashBar.setPreferredSize(new java.awt.Dimension(10, 8));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -614,7 +659,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         salesRows.add(gcashLabel, gridBagConstraints);
 
-        gcashText.setText(" ");
+        gcashText.setText("\u20b11,520.00 \u00b7 37%");
         gcashText.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -624,6 +669,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
 
         gcashBar.setForeground(new java.awt.Color(124, 196, 187));
         gcashBar.setBorderPainted(false);
+        gcashBar.setValue(37);
         gcashBar.setValue(0);
         gcashBar.setPreferredSize(new java.awt.Dimension(10, 8));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -670,7 +716,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         wasteHead.add(wasteHeading, gridBagConstraints);
 
-        wasteSummary.setText(" ");
+        wasteSummary.setText("Last 7 days \u00b7 18 items");
         wasteSummary.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         wasteSummary.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -694,6 +740,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
 
         wasteBar0.setForeground(new java.awt.Color(15, 118, 110));
         wasteBar0.setBorderPainted(false);
+        wasteBar0.setValue(100);
         wasteBar0.setValue(0);
         wasteBar0.setPreferredSize(new java.awt.Dimension(10, 8));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -704,7 +751,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 14, 12);
         wasteRows.add(wasteBar0, gridBagConstraints);
 
-        wasteCount0.setText(" ");
+        wasteCount0.setText("8");
         wasteCount0.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         wasteCount0.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         wasteCount0.setPreferredSize(new java.awt.Dimension(28, 20));
@@ -726,6 +773,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
 
         wasteBar1.setForeground(new java.awt.Color(15, 118, 110));
         wasteBar1.setBorderPainted(false);
+        wasteBar1.setValue(75);
         wasteBar1.setValue(0);
         wasteBar1.setPreferredSize(new java.awt.Dimension(10, 8));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -736,7 +784,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 14, 12);
         wasteRows.add(wasteBar1, gridBagConstraints);
 
-        wasteCount1.setText(" ");
+        wasteCount1.setText("6");
         wasteCount1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         wasteCount1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         wasteCount1.setPreferredSize(new java.awt.Dimension(28, 20));
@@ -758,6 +806,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
 
         wasteBar2.setForeground(new java.awt.Color(15, 118, 110));
         wasteBar2.setBorderPainted(false);
+        wasteBar2.setValue(50);
         wasteBar2.setValue(0);
         wasteBar2.setPreferredSize(new java.awt.Dimension(10, 8));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -768,7 +817,7 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 14, 12);
         wasteRows.add(wasteBar2, gridBagConstraints);
 
-        wasteCount2.setText(" ");
+        wasteCount2.setText("4");
         wasteCount2.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         wasteCount2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         wasteCount2.setPreferredSize(new java.awt.Dimension(28, 20));
@@ -820,6 +869,8 @@ public class DashboardPanel extends javax.swing.JPanel implements Refreshable {
     private javax.swing.JLabel lowTitle;
     private javax.swing.JLabel lowValue;
     private javax.swing.JPanel nextBody;
+    private javax.swing.JLabel nextSampleInfo;
+    private javax.swing.JLabel nextSampleTitle;
     private com.printhub.ui.CardPanel nextCard;
     private javax.swing.JLabel nextHeading;
     private com.printhub.ui.CardPanel pendingCard;

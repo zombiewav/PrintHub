@@ -701,7 +701,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 12, 0);
         priceCard.add(priceHeading, gridBagConstraints);
 
-        priceTitleLabel.setText(" ");
+        priceTitleLabel.setText("B&W Printing \u00b7 A4");
         priceTitleLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -721,7 +721,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 5, 0);
         priceCard.add(unitName, gridBagConstraints);
 
-        unitPriceLabel.setText(" ");
+        unitPriceLabel.setText("\u20b12.00");
         unitPriceLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         unitPriceLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -741,7 +741,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 5, 0);
         priceCard.add(pagesName, gridBagConstraints);
 
-        pagesValueLabel.setText(" ");
+        pagesValueLabel.setText("\u00d7 1");
         pagesValueLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         pagesValueLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -761,7 +761,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 5, 0);
         priceCard.add(copiesName, gridBagConstraints);
 
-        copiesValueLabel.setText(" ");
+        copiesValueLabel.setText("\u00d7 1");
         copiesValueLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         copiesValueLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -792,7 +792,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 5, 0);
         priceCard.add(subtotalName, gridBagConstraints);
 
-        subtotalLabel.setText(" ");
+        subtotalLabel.setText("\u20b12.00");
         subtotalLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         subtotalLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -812,7 +812,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.insets = new java.awt.Insets(5, 0, 5, 0);
         priceCard.add(rushFeeName, gridBagConstraints);
 
-        rushFeeLabel.setText(" ");
+        rushFeeLabel.setText("\u20b10.00");
         rushFeeLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         rushFeeLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -847,7 +847,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         totalBox.add(totalCaption, gridBagConstraints);
 
-        totalLabel.setText(" ");
+        totalLabel.setText("\u20b12.00");
         totalLabel.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
         totalLabel.setForeground(new java.awt.Color(15, 118, 110));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -857,7 +857,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.weightx = 1.0;
         totalBox.add(totalLabel, gridBagConstraints);
 
-        sheetsLabel.setText(" ");
+        sheetsLabel.setText("1 sheets in total");
         sheetsLabel.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         sheetsLabel.setForeground(new java.awt.Color(15, 118, 110));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1125,7 +1125,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         paymentRight.add(dueCaption, gridBagConstraints);
 
-        amountDueLabel.setText(" ");
+        amountDueLabel.setText("\u20b12.00");
         amountDueLabel.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;

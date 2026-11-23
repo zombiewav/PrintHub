@@ -109,7 +109,7 @@ public class WasteLogTab extends javax.swing.JPanel {
         gridBagConstraints.weightx = 1.0;
         toolbar.add(toolbarSpacer, gridBagConstraints);
 
-        totalLabel.setText(" ");
+        totalLabel.setText("Total wasted: 34 items");
         totalLabel.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         totalLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -120,6 +120,31 @@ public class WasteLogTab extends javax.swing.JPanel {
         add(toolbar, java.awt.BorderLayout.NORTH);
 
         com.printhub.ui.Ui.scroll(scroll);
+        table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
+            },
+            new String [] {
+                "Date", "Item", "Qty", "Reason", "Related Job ID"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
 
         scroll.setViewportView(table);
         add(scroll, java.awt.BorderLayout.CENTER);
@@ -128,7 +153,7 @@ public class WasteLogTab extends javax.swing.JPanel {
         footer.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, new java.awt.Color(229, 231, 235)));
         footer.setLayout(new java.awt.GridBagLayout());
 
-        footerLabel.setText(" ");
+        footerLabel.setText("7 records \u00b7 Paper Jam 14 \u00b7 Misprint 11 \u00b7 Damaged 9");
         footerLabel.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         footerLabel.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();

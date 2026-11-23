@@ -259,6 +259,31 @@ public class SuppliesTab extends javax.swing.JPanel {
         add(toolbar, java.awt.BorderLayout.NORTH);
 
         com.printhub.ui.Ui.scroll(scroll);
+        table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "Item ID", "Name", "Category", "Size", "Stock", "Reorder Level", "Unit Cost", "Status"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
 
         scroll.setViewportView(table);
         add(scroll, java.awt.BorderLayout.CENTER);
@@ -267,7 +292,7 @@ public class SuppliesTab extends javax.swing.JPanel {
         footer.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, new java.awt.Color(229, 231, 235)));
         footer.setLayout(new java.awt.GridBagLayout());
 
-        footerLabel.setText(" ");
+        footerLabel.setText("10 items \u00b7 4 low \u00b7 1 out of stock");
         footerLabel.setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         footerLabel.setForeground(new java.awt.Color(75, 85, 99));
         gridBagConstraints = new java.awt.GridBagConstraints();

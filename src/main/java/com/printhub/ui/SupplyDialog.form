@@ -88,6 +88,16 @@
           </Constraints>
         </Component>
         <Component class="javax.swing.JComboBox" name="categoryBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="4">
+                <StringItem index="0" value="Paper"/>
+                <StringItem index="1" value="Ink"/>
+                <StringItem index="2" value="Lamination Film"/>
+                <StringItem index="3" value="Photo Paper"/>
+              </StringArray>
+            </Property>
+          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="categoryBox.setModel(new javax.swing.DefaultComboBoxModel&lt;&gt;(new String[] {&quot;Paper&quot;, &quot;Ink&quot;, &quot;Lamination Film&quot;, &quot;Photo Paper&quot;}));&#xA;com.printhub.ui.Ui.combo(categoryBox);"/>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
@@ -141,6 +151,17 @@
           </Constraints>
         </Component>
         <Component class="javax.swing.JComboBox" name="sizeBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="5">
+                <StringItem index="0" value="&#x2014;"/>
+                <StringItem index="1" value="A4"/>
+                <StringItem index="2" value="Short"/>
+                <StringItem index="3" value="Long"/>
+                <StringItem index="4" value="4R"/>
+              </StringArray>
+            </Property>
+          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="sizeBox.setModel(new javax.swing.DefaultComboBoxModel&lt;&gt;(new String[] {&quot;\u2014&quot;, &quot;A4&quot;, &quot;Short&quot;, &quot;Long&quot;, &quot;4R&quot;}));&#xA;com.printhub.ui.Ui.combo(sizeBox);"/>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
@@ -168,6 +189,15 @@
           </Constraints>
         </Component>
         <Component class="javax.swing.JComboBox" name="unitBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="3">
+                <StringItem index="0" value="sheets"/>
+                <StringItem index="1" value="pages"/>
+                <StringItem index="2" value="pcs"/>
+              </StringArray>
+            </Property>
+          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="unitBox.setModel(new javax.swing.DefaultComboBoxModel&lt;&gt;(new String[] {&quot;sheets&quot;, &quot;pages&quot;, &quot;pcs&quot;}));&#xA;com.printhub.ui.Ui.combo(unitBox);"/>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>

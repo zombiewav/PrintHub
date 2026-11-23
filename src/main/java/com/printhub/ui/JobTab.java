@@ -97,6 +97,31 @@ public class JobTab extends javax.swing.JPanel {
         add(bannerWrap, java.awt.BorderLayout.NORTH);
 
         com.printhub.ui.Ui.scroll(scroll);
+        table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "Queue #", "Job ID", "Customer", "Service", "Size", "Pages \u00d7 Copies", "Priority", "Time Received", "Status", "Payment"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
 
         scroll.setViewportView(table);
         add(scroll, java.awt.BorderLayout.CENTER);
