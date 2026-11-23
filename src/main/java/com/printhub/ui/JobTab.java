@@ -3,6 +3,7 @@ package com.printhub.ui;
 import static com.printhub.ui.PrintHubTheme.*;
 
 import com.printhub.model.JobOrder;
+import com.printhub.model.JobSource;
 import java.awt.FlowLayout;
 import java.util.List;
 import javax.swing.JTable;
@@ -12,7 +13,7 @@ import javax.swing.table.DefaultTableModel;
 public class JobTab extends javax.swing.JPanel {
 
     private static final String[] COLUMNS = {"Queue #", "Job ID", "Customer", "Service", "Size",
-        "Pages " + Ui.TIMES + " Copies", "Priority", "Time Received", "Status"};
+        "Pages " + Ui.TIMES + " Copies", "Priority", "Time Received", "Status", "Payment"};
 
     private final DefaultTableModel model = Tables.model(COLUMNS);
     private final boolean pending;
@@ -22,8 +23,8 @@ public class JobTab extends javax.swing.JPanel {
         this.pending = pending;
         initComponents();
         table.setModel(model);
-        Tables.prepare(table, new int[] {}, new int[] {6, 8}, pending);
-        Tables.widths(table, 70, 100, 170, 140, 70, 110, 100, 120, 110);
+        Tables.prepare(table, new int[] {}, new int[] {6, 8, 9}, pending);
+        Tables.widths(table, 70, 100, 170, 140, 70, 110, 100, 120, 110, 90);
         banner.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 9));
         bannerWrap.setVisible(pending);
     }
@@ -38,8 +39,10 @@ public class JobTab extends javax.swing.JPanel {
         for (JobOrder j : jobs) {
             model.addRow(new Object[] {
                 numbered ? String.valueOf(n++) : Ui.DASH,
-                j.getId(), j.getCustomer(), j.getService().label(), j.getSize().label(), j.pagesCopies(),
-                j.isRush() ? "Rush" : "Normal", j.getReceived().format(Ui.TIME), j.getStatus().label()});
+                j.getId(), j.getSource() == JobSource.ONLINE ? j.getCustomer() + " (Online)" : j.getCustomer(),
+                j.getService().label(), j.getSize().label(), j.pagesCopies(),
+                j.isRush() ? "Rush" : "Normal", j.getReceived().format(Ui.TIME), j.getStatus().label(),
+                j.getPaymentStatus().label()});
         }
     }
 

@@ -141,10 +141,14 @@ public final class PrintHubTheme {
         switch (status) {
             case "Processing":   return PROCESSING;
             case "Completed":
+            case "Paid":
             case "OK":           return COMPLETED;
             case "Rush":         return RUSH;
-            case "Low":          return LOW;
+            case "Low":
+            case "Unpaid":       return LOW;
             case "Out":
+            case "Cancelled":
+            case "Void":
             case "Insufficient": return INSUFFICIENT;
             default:             return PENDING;
         }

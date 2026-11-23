@@ -2,9 +2,14 @@ package com.printhub.ui;
 
 import com.printhub.data.PrintHubData;
 import com.printhub.model.JobOrder;
+import com.printhub.model.PaymentStatus;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /** Job Queue: Pending, Processing and Completed jobs. Rush jobs go first, then first come, first served. */
@@ -15,20 +20,40 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
     private final JobTab pendingJobs = new JobTab(true);
     private final JobTab processingJobs = new JobTab(false);
     private final JobTab completedJobs = new JobTab(false);
+    private final JobTab cancelledJobs = new JobTab(false);
     private final TabHeader pendingTab;
     private final TabHeader processingTab;
     private final TabHeader completedTab;
+    private final TabHeader cancelledTab;
+    private final JButton markPaidButton = Ui.primary("Mark Paid");
+    private final JButton cancelJobButton = Ui.danger(new JButton("Cancel Job"));
 
     private List<JobOrder> pendingRows = new ArrayList<>();
     private List<JobOrder> processingRows = new ArrayList<>();
     private List<JobOrder> completedRows = new ArrayList<>();
+    private List<JobOrder> cancelledRows = new ArrayList<>();
 
     public JobQueuePanel() {
         initComponents();
         pendingTab = Ui.addTab(tabs, "Pending", pendingJobs, 0);
         processingTab = Ui.addTab(tabs, "Processing", processingJobs, 0);
         completedTab = Ui.addTab(tabs, "Completed", completedJobs, 0);
+        cancelledTab = Ui.addTab(tabs, "Cancelled", cancelledJobs, 0);
         Ui.syncTabs(tabs);
+
+        GridBagConstraints right = new GridBagConstraints();
+        right.gridx = 4;
+        right.gridy = 0;
+        right.insets = new Insets(16, 16, 0, 8);
+        footer.add(markPaidButton, right);
+        right = new GridBagConstraints();
+        right.gridx = 5;
+        right.gridy = 0;
+        right.insets = new Insets(16, 0, 0, 0);
+        footer.add(cancelJobButton, right);
+        markPaidButton.addActionListener(e -> markPaid());
+        cancelJobButton.addActionListener(e -> cancelJob());
+        pendingJobs.getTable().getSelectionModel().addListSelectionListener(e -> updateButtons());
 
         startButton.addActionListener(e -> {
             JobOrder job = data.startNextJob();
@@ -43,7 +68,11 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         markDoneButton.addActionListener(e -> {
             int row = processingJobs.getTable().getSelectedRow();
             if (row >= 0 && row < processingRows.size()) {
-                data.completeJob(processingRows.get(row));
+                try {
+                    data.completeJob(processingRows.get(row));
+                } catch (IllegalStateException ex) {
+                    warn(ex.getMessage());
+                }
             }
         });
         reportWasteButton.addActionListener(e -> {
@@ -57,8 +86,8 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
 
     private JobOrder selectedJob() {
         int tab = tabs.getSelectedIndex();
-        JobTab content = tab == 0 ? pendingJobs : tab == 1 ? processingJobs : completedJobs;
-        List<JobOrder> rows = tab == 0 ? pendingRows : tab == 1 ? processingRows : completedRows;
+        JobTab content = tab == 0 ? pendingJobs : tab == 1 ? processingJobs : tab == 2 ? completedJobs : cancelledJobs;
+        List<JobOrder> rows = tab == 0 ? pendingRows : tab == 1 ? processingRows : tab == 2 ? completedRows : cancelledRows;
         int row = content.getTable().getSelectedRow();
         if (row >= 0 && row < rows.size()) {
             return rows.get(row);
@@ -66,9 +95,54 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         return (tab == 1 && !rows.isEmpty()) ? rows.get(0) : null;
     }
 
+    /** The job highlighted in the Pending or Processing tab, or null (no guessing, unlike selectedJob). */
+    private JobOrder highlightedActiveJob() {
+        int tab = tabs.getSelectedIndex();
+        if (tab > 1) {
+            return null;
+        }
+        JobTab content = tab == 0 ? pendingJobs : processingJobs;
+        List<JobOrder> rows = tab == 0 ? pendingRows : processingRows;
+        int row = content.getTable().getSelectedRow();
+        return row >= 0 && row < rows.size() ? rows.get(row) : null;
+    }
+
     private void updateButtons() {
-        startButton.setEnabled(!pendingRows.isEmpty());
+        startButton.setEnabled(data.peekNext() != null);
         markDoneButton.setEnabled(tabs.getSelectedIndex() == 1 && processingJobs.getTable().getSelectedRow() >= 0);
+        JobOrder job = highlightedActiveJob();
+        markPaidButton.setEnabled(job != null && tabs.getSelectedIndex() == 0
+                && job.getPaymentStatus() == PaymentStatus.UNPAID);
+        cancelJobButton.setEnabled(job != null);
+    }
+
+    private void markPaid() {
+        JobOrder job = highlightedActiveJob();
+        if (job != null) {
+            new MarkPaidDialog(SwingUtilities.getWindowAncestor(this), job).showAndGet();
+        }
+    }
+
+    private void cancelJob() {
+        JobOrder job = highlightedActiveJob();
+        if (job == null) {
+            return;
+        }
+        String paidNote = job.getPaymentStatus() == PaymentStatus.PAID
+                ? "\nIts payment will be marked void." : "";
+        int answer = JOptionPane.showConfirmDialog(this, "Cancel " + job.getId() + " for " + job.getCustomer() + "?"
+                + paidNote, "Cancel Job", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (answer == JOptionPane.YES_OPTION) {
+            try {
+                data.cancelJob(job);
+            } catch (IllegalStateException ex) {
+                warn(ex.getMessage());
+            }
+        }
+    }
+
+    private void warn(String message) {
+        JOptionPane.showMessageDialog(this, message, "Job Queue", JOptionPane.WARNING_MESSAGE);
     }
 
     @Override
@@ -76,15 +150,18 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         pendingRows = data.pendingJobs();
         processingRows = data.processingJobs();
         completedRows = data.completedJobs();
+        cancelledRows = data.cancelledJobs();
 
         pendingJobs.load(pendingRows, true);
         processingJobs.load(processingRows, true);
         completedJobs.load(completedRows, false);
+        cancelledJobs.load(cancelledRows, false);
         pendingJobs.showNext(data.peekNext());
 
         pendingTab.setCount(pendingRows.size());
         processingTab.setCount(processingRows.size());
         completedTab.setCount(completedRows.size());
+        cancelledTab.setCount(cancelledRows.size());
 
         int rush = 0;
         for (JobOrder j : pendingRows) {
