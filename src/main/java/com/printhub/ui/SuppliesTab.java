@@ -99,7 +99,11 @@ public class SuppliesTab extends javax.swing.JPanel {
         int ok = JOptionPane.showConfirmDialog(this, "Delete " + s.getId() + " " + Ui.DOT + " " + s.displayName() + "?",
                 "Delete supply", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (ok == JOptionPane.YES_OPTION) {
-            data.removeSupply(s.getId());
+            try {
+                data.removeSupply(s.getId());
+            } catch (SecurityException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Cannot delete", JOptionPane.WARNING_MESSAGE);
+            }
         }
     }
 
