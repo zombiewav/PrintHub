@@ -55,22 +55,11 @@ public class PaymentService {
             if (existing != null && existing.getStatus() == PaymentStatus.PAID) {
                 throw new IllegalStateException(job.getId() + " is already paid.");
             }
+            validate(job.getTotal(), method, tendered, reference);
             long amount = Money.toCentavos(job.getTotal());
-            long given = 0;
-            long change = 0;
-            String ref = null;
-            if (method == PaymentMethod.CASH) {
-                given = Money.toCentavos(tendered);
-                if (given < amount) {
-                    throw new IllegalArgumentException("Amount tendered is less than the amount due.");
-                }
-                change = given - amount;
-            } else {
-                ref = reference == null ? "" : reference.trim();
-                if (ref.isEmpty()) {
-                    throw new IllegalArgumentException("Enter the GCash reference number.");
-                }
-            }
+            long given = method == PaymentMethod.CASH ? Money.toCentavos(tendered) : 0;
+            long change = method == PaymentMethod.CASH ? given - amount : 0;
+            String ref = method == PaymentMethod.GCASH ? reference.trim() : null;
             Transaction t = new Transaction(String.format("TXN-%04d", nextNumber), LocalDateTime.now(),
                     job.getCustomer(), job.getId(), Money.fromCentavos(amount), method, ref, PaymentStatus.PAID,
                     job.getDiscountAmount(), Money.fromCentavos(given), Money.fromCentavos(change),
@@ -83,6 +72,17 @@ public class PaymentService {
             nextNumber++;
             transactions.add(0, t);
             return t;
+        }
+    }
+
+    /** Throws IllegalArgumentException if this payment could not be recorded: short cash or no GCash reference. */
+    public void validate(double amountDue, PaymentMethod method, double tendered, String reference) {
+        if (method == PaymentMethod.CASH) {
+            if (Money.toCentavos(tendered) < Money.toCentavos(amountDue)) {
+                throw new IllegalArgumentException("Amount tendered is less than the amount due.");
+            }
+        } else if (reference == null || reference.trim().isEmpty()) {
+            throw new IllegalArgumentException("Enter the GCash reference number.");
         }
     }
 
