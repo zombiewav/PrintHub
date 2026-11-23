@@ -181,6 +181,73 @@ class OrderServiceTest {
     }
 
     @Test
+    void submitOnlineCreatesAnUnpaidOnlineJobWithTheFileAndTheServerSidePrice() {
+        JobOrder job = orders.submitOnline("Kim Lopez", Service.BW, PaperSize.SHORT, 10, 2, false, "uploads/a.pdf");
+        assertEquals(JobSource.ONLINE, job.getSource());
+        assertEquals(PaymentStatus.UNPAID, job.getPaymentStatus());
+        assertEquals(JobStatus.PENDING, job.getStatus());
+        assertEquals("uploads/a.pdf", job.getFilePath());
+        assertEquals(40, job.getTotal(), 0.0001);
+        assertTrue(payments.transactions().isEmpty());
+        assertNull(queue.peekNext()); // unpaid, so it cannot be printed yet
+    }
+
+    @Test
+    void submitOnlineRushAddsTheRushFee() {
+        assertEquals(60, orders.submitOnline("Kim", Service.BW, PaperSize.SHORT, 10, 2, true, null).getTotal(), 0.0001);
+    }
+
+    @Test
+    void blankOnlineNameBecomesOnlineCustomer() {
+        assertEquals("Online customer", orders.submitOnline("  ", Service.BW, PaperSize.A4, 1, 1, false, null).getCustomer());
+    }
+
+    @Test
+    void onlineOrdersClaimStockSoCounterOrdersSeeIt() {
+        orders.submitOnline("Kim", Service.BW, PaperSize.LONG, 10, 10, false, null); // 100 of 180 Long sheets
+        assertThrows(IllegalStateException.class, () -> cashOrder(PaperSize.LONG, 10, 10, false, 1000));
+        cashOrder(PaperSize.LONG, 8, 10, false, 1000);
+    }
+
+    @Test
+    void submitOnlineIsRefusedWhenStockIsShortAndCreatesNothing() {
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> orders.submitOnline("Kim", Service.BW, PaperSize.LONG, 25, 10, false, null));
+        assertEquals("Not enough stock for this order.", e.getMessage());
+        assertTrue(queue.all().isEmpty());
+    }
+
+    @Test
+    void onlyBlackAndWhiteAndColorPrintingCanBeOrderedOnline() {
+        assertThrows(IllegalArgumentException.class,
+                () -> orders.submitOnline("Kim", Service.LAMINATION, PaperSize.A4, 1, 1, false, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> orders.submitOnline("Kim", Service.ID_PICTURE, PaperSize.A4, 1, 1, false, null));
+        assertTrue(queue.all().isEmpty());
+    }
+
+    @Test
+    void invalidOnlineQuantitiesAreRefused() {
+        assertThrows(IllegalArgumentException.class, () -> orders.submitOnline("Kim", Service.BW, PaperSize.A4, 0, 1, false, null));
+        assertThrows(IllegalArgumentException.class, () -> orders.submitOnline("Kim", Service.BW, PaperSize.A4, 1, 0, false, null));
+        assertTrue(queue.all().isEmpty());
+    }
+
+    @Test
+    void tooManyUnpaidOnlineOrdersAreRefusedUntilSomeArePaidOrCancelled() {
+        JobOrder first = null;
+        for (int i = 0; i < 20; i++) {
+            JobOrder j = orders.submitOnline("Kim " + i, Service.BW, PaperSize.SHORT, 1, 1, false, null);
+            first = first == null ? j : first;
+        }
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> orders.submitOnline("One too many", Service.BW, PaperSize.SHORT, 1, 1, false, null));
+        assertTrue(e.getMessage().startsWith("Too many online orders"), e.getMessage());
+        orders.cancel(first);
+        orders.submitOnline("Now it fits", Service.BW, PaperSize.SHORT, 1, 1, false, null);
+    }
+
+    @Test
     void completedWalkInJobDeductsStockAndFreesTheReservation() {
         JobOrder job = cashOrder(PaperSize.LONG, 10, 10, false, 1000);
         queue.startNext();

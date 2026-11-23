@@ -30,6 +30,18 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.46.1.3</version>
         </dependency>
+        <!-- Counts the pages of PDFs that customers upload through the hotspot portal -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        <!-- QR code that opens the portal on a customer's phone -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

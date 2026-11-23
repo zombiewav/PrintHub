@@ -31,8 +31,13 @@ import com.printhub.service.Session;
 import com.printhub.service.SettingsService;
 import com.printhub.service.StockEstimator;
 import com.printhub.service.SupplierService;
+import com.printhub.web.PortalServer;
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,7 +58,8 @@ public final class PrintHubData {
     public static synchronized PrintHubData get() {
         if (instance == null) {
             String path = System.getProperty("user.dir") + File.separator + "printhub.db";
-            instance = new PrintHubData(Database.open("jdbc:sqlite:" + path));
+            instance = new PrintHubData(Database.open("jdbc:sqlite:" + path),
+                    Path.of(System.getProperty("user.dir"), "uploads"));
             instance.startBackgroundTasks();
         }
         return instance;
@@ -69,10 +75,18 @@ public final class PrintHubData {
     private final ReportService reports;
     private final SettingsService shopSettings;
     private final CustomerService customers;
+    private final Path uploadDir;
+    private PortalServer portal;
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
-    /** Opens the services on a database, loading the sample shop if it is brand new. */
+    /** Opens the services on a database (customer uploads go to a folder under the temp directory). */
     PrintHubData(Database db) {
+        this(db, Path.of(System.getProperty("java.io.tmpdir"), "printhub-uploads"));
+    }
+
+    /** Opens the services on a database, loading the sample shop if it is brand new. */
+    PrintHubData(Database db, Path uploadDir) {
+        this.uploadDir = uploadDir;
         Seeder.seed(db);
         Settings settings = new Settings(db);
         this.accounts = new AccountService(db);
@@ -385,6 +399,52 @@ public final class PrintHubData {
     public void completeJob(JobOrder job) {
         queue.complete(job);
         changed();
+    }
+
+    // ---- Customer portal (phones on the shop's Wi-Fi hotspot) ---------------------------------
+
+    /** Starts the portal. Port 0 picks a free port. Throws IOException if the port is already in use. */
+    public synchronized void startPortal(int port) throws IOException {
+        if (portal == null) {
+            portal = new PortalServer(orders, queue, pricing, uploadDir, PortalServer.Limits.defaults(), this::changed);
+        }
+        portal.start(port);
+    }
+
+    public synchronized void stopPortal() {
+        if (portal != null) {
+            portal.stop();
+        }
+    }
+
+    public synchronized boolean isPortalRunning() {
+        return portal != null && portal.isRunning();
+    }
+
+    /** The port the portal listens on, or -1 when it is stopped. */
+    public synchronized int portalPort() {
+        return portal == null ? -1 : portal.port();
+    }
+
+    /**
+     * Opens a customer's uploaded PDF in the computer's PDF viewer so staff can check it. Only files inside the
+     * uploads folder are opened.
+     */
+    public void openCustomerFile(JobOrder job) throws IOException {
+        if (job.getFilePath() == null) {
+            throw new IllegalStateException("This job has no customer file.");
+        }
+        Path file = Path.of(job.getFilePath()).toAbsolutePath().normalize();
+        if (!file.startsWith(uploadDir.toAbsolutePath().normalize())) {
+            throw new IllegalStateException("That file is not inside the uploads folder, so it will not be opened.");
+        }
+        if (!Files.exists(file)) {
+            throw new IllegalStateException("The file is no longer there. It is removed when an order is cancelled.");
+        }
+        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+            throw new IllegalStateException("This computer cannot open files from here. The file is " + file);
+        }
+        Desktop.getDesktop().open(file.toFile());
     }
 
     // ---- Waste ------------------------------------------------------------------------------

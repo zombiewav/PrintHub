@@ -40,6 +40,23 @@ class UiSmokeTest {
     }
 
     @Test
+    void portalDialogBuildsWhileStoppedAndWhileRunning() throws Exception {
+        Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "needs a display to build a dialog");
+        onSwingThread(() -> {
+            PrintHubData data = PrintHubData.get();
+            new PortalDialog(null).dispose();
+            try {
+                data.startPortal(0);
+                new PortalDialog(null).dispose();
+            } catch (java.io.IOException e) {
+                throw new AssertionError(e);
+            } finally {
+                data.stopPortal();
+            }
+        });
+    }
+
+    @Test
     void existingScreensBuildAndRefresh() throws Exception {
         onSwingThread(() -> {
             PrintHubData data = PrintHubData.get();
