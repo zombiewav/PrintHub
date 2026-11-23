@@ -70,6 +70,13 @@ public class InventoryService {
         }
     }
 
+    /** The supply with this id even if it has been deleted (for history); null if it never existed. */
+    public Supply lookup(String id) {
+        synchronized (db.lock()) {
+            return cache.get(id);
+        }
+    }
+
     /** The next free id: SUP-001, SUP-002, ... */
     public String newId() {
         synchronized (db.lock()) {
