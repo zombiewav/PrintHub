@@ -53,7 +53,7 @@
               <BorderConstraints direction="Center"/>
             </Constraint>
           </Constraints>
-          <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
+          <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/><SubComponents><Component class="javax.swing.JLabel" name="bannerSample"><Properties><Property name="text" type="java.lang.String" value="Next to process  JOB-0231 &#x00B7; Juan Dela Cruz &#x00B7; Colored Printing &#x00B7; A4"/><Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor"><Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo"><EmptyBorder bottom="0" left="12" right="0" top="0"/></Border></Property></Properties><Constraints><Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription"><BorderConstraints direction="Center"/></Constraint></Constraints></Component></SubComponents>
         </Container>
       </SubComponents>
     </Container>

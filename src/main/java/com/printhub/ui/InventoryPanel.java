@@ -12,6 +12,7 @@ public class InventoryPanel extends javax.swing.JPanel implements Refreshable {
 
     public InventoryPanel() {
         initComponents();
+        tabs.removeAll(); // the form shows sample pages; the real tabs are added below
         suppliesHeader = Ui.addTab(tabs, "Supplies", supplies, 0);
         wasteHeader = Ui.addTab(tabs, "Waste Log", wasteLog, 0);
         movementsHeader = Ui.addTab(tabs, "Stock Movements", movements, 0);
@@ -42,6 +43,12 @@ public class InventoryPanel extends javax.swing.JPanel implements Refreshable {
         subtitleLabel = new javax.swing.JLabel();
         card = new com.printhub.ui.CardPanel();
         tabs = new javax.swing.JTabbedPane();
+        pageSupplies = new javax.swing.JPanel();
+        noteSupplies = new javax.swing.JLabel();
+        pageWaste = new javax.swing.JPanel();
+        noteWaste = new javax.swing.JLabel();
+        pageMovements = new javax.swing.JPanel();
+        noteMovements = new javax.swing.JLabel();
 
         setOpaque(false);
         setLayout(new java.awt.BorderLayout());
@@ -72,6 +79,36 @@ public class InventoryPanel extends javax.swing.JPanel implements Refreshable {
         card.setLayout(new java.awt.BorderLayout());
 
         tabs.setOpaque(false);
+
+        pageSupplies.setBackground(new java.awt.Color(255, 255, 255));
+        pageSupplies.setLayout(new java.awt.BorderLayout());
+
+        noteSupplies.setForeground(new java.awt.Color(75, 85, 99));
+        noteSupplies.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        noteSupplies.setText("The supplies table is filled in when the app runs. See SuppliesTab.");
+        pageSupplies.add(noteSupplies, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Supplies", pageSupplies);
+
+        pageWaste.setBackground(new java.awt.Color(255, 255, 255));
+        pageWaste.setLayout(new java.awt.BorderLayout());
+
+        noteWaste.setForeground(new java.awt.Color(75, 85, 99));
+        noteWaste.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        noteWaste.setText("The waste log is filled in when the app runs. See WasteLogTab.");
+        pageWaste.add(noteWaste, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Waste Log", pageWaste);
+
+        pageMovements.setBackground(new java.awt.Color(255, 255, 255));
+        pageMovements.setLayout(new java.awt.BorderLayout());
+
+        noteMovements.setForeground(new java.awt.Color(75, 85, 99));
+        noteMovements.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        noteMovements.setText("The stock movements table is built in code when the app runs.");
+        pageMovements.add(noteMovements, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Stock Movements", pageMovements);
         card.add(tabs, java.awt.BorderLayout.CENTER);
         add(card, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
@@ -82,5 +119,11 @@ public class InventoryPanel extends javax.swing.JPanel implements Refreshable {
     private javax.swing.JLabel subtitleLabel;
     private javax.swing.JTabbedPane tabs;
     private javax.swing.JLabel titleLabel;
+    private javax.swing.JLabel noteSupplies;
+    private javax.swing.JPanel pageSupplies;
+    private javax.swing.JLabel noteWaste;
+    private javax.swing.JPanel pageWaste;
+    private javax.swing.JLabel noteMovements;
+    private javax.swing.JPanel pageMovements;
     // End of variables declaration//GEN-END:variables
 }

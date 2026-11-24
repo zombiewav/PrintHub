@@ -34,7 +34,7 @@
           <BorderConstraints direction="West"/>
         </Constraint>
       </Constraints>
-      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/><SubComponents><Component class="javax.swing.JLabel" name="sidebarSample"><Properties><Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor"><Color blue="63" green="55" red="4b" type="rgb"/></Property><Property name="horizontalAlignment" type="int" value="0"/><Property name="text" type="java.lang.String" value="Sidebar (see Sidebar.form)"/></Properties><Constraints><Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription"><BorderConstraints direction="Center"/></Constraint></Constraints></Component></SubComponents>
     </Container>
     <Container class="javax.swing.JPanel" name="contentPanel">
       <Properties>
@@ -50,7 +50,7 @@
           <BorderConstraints direction="Center"/>
         </Constraint>
       </Constraints>
-      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignCardLayout"/>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignCardLayout"/><SubComponents><Container class="javax.swing.JPanel" name="samplePage"><Properties><Property name="opaque" type="boolean" value="false"/></Properties><Constraints><Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignCardLayout" value="org.netbeans.modules.form.compat2.layouts.DesignCardLayout$CardConstraintsDescription"><CardConstraints cardName="sample"/></Constraint></Constraints><Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/><SubComponents><Component class="javax.swing.JLabel" name="sampleNote"><Properties><Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor"><Color blue="63" green="55" red="4b" type="rgb"/></Property><Property name="horizontalAlignment" type="int" value="0"/><Property name="text" type="java.lang.String" value="The screens (Dashboard, New Order, Job Queue, Inventory ...) are shown here when the app runs."/></Properties><Constraints><Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription"><BorderConstraints direction="Center"/></Constraint></Constraints></Component></SubComponents></Container></SubComponents>
     </Container>
   </SubComponents>
 </Form>

@@ -22,6 +22,7 @@ public class JobTab extends javax.swing.JPanel {
     public JobTab(boolean pending) {
         this.pending = pending;
         initComponents();
+        banner.removeAll(); // the form shows a sample banner; showNext fills the real one
         table.setModel(model);
         Tables.prepare(table, new int[] {}, new int[] {6, 8, 9}, pending);
         Tables.widths(table, 70, 100, 170, 140, 70, 110, 100, 120, 110, 90);
@@ -78,6 +79,7 @@ public class JobTab extends javax.swing.JPanel {
     private void initComponents() {
         bannerWrap = new javax.swing.JPanel();
         banner = new com.printhub.ui.RoundedPanel();
+        bannerSample = new javax.swing.JLabel();
         scroll = new javax.swing.JScrollPane();
         table = new javax.swing.JTable();
 
@@ -93,6 +95,10 @@ public class JobTab extends javax.swing.JPanel {
         banner.setLineColor(new java.awt.Color(183, 221, 216));
         banner.setPreferredSize(new java.awt.Dimension(10, 40));
         banner.setLayout(new java.awt.BorderLayout());
+
+        bannerSample.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 12, 0, 0));
+        bannerSample.setText("Next to process  JOB-0231 \u00b7 Juan Dela Cruz \u00b7 Colored Printing \u00b7 A4");
+        banner.add(bannerSample, java.awt.BorderLayout.CENTER);
         bannerWrap.add(banner, java.awt.BorderLayout.CENTER);
         add(bannerWrap, java.awt.BorderLayout.NORTH);
 
@@ -132,5 +138,6 @@ public class JobTab extends javax.swing.JPanel {
     private javax.swing.JPanel bannerWrap;
     private javax.swing.JScrollPane scroll;
     private javax.swing.JTable table;
+    private javax.swing.JLabel bannerSample;
     // End of variables declaration//GEN-END:variables
 }

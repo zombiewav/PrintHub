@@ -21,6 +21,8 @@ public class MainFrame extends javax.swing.JFrame {
 
     public MainFrame(Account user, Runnable onLogout) {
         initComponents();
+        sidebarHost.removeAll(); // the form shows placeholders; the real sidebar and screens are added below
+        contentPanel.removeAll();
         setIconImage(Ui.appIcon());
         cards = (CardLayout) contentPanel.getLayout();
 
@@ -99,6 +101,9 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
         sidebarHost = new javax.swing.JPanel();
         contentPanel = new javax.swing.JPanel();
+        sidebarSample = new javax.swing.JLabel();
+        samplePage = new javax.swing.JPanel();
+        sampleNote = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("PrintHub");
@@ -106,11 +111,25 @@ public class MainFrame extends javax.swing.JFrame {
 
         sidebarHost.setPreferredSize(new java.awt.Dimension(220, 720));
         sidebarHost.setLayout(new java.awt.BorderLayout());
+        sidebarSample.setForeground(new java.awt.Color(75, 85, 99));
+        sidebarSample.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        sidebarSample.setText("Sidebar (see Sidebar.form)");
+        sidebarHost.add(sidebarSample, java.awt.BorderLayout.CENTER);
         getContentPane().add(sidebarHost, java.awt.BorderLayout.WEST);
 
         contentPanel.setBackground(new java.awt.Color(243, 244, 246));
         contentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(24, 24, 24, 24));
         contentPanel.setLayout(new java.awt.CardLayout());
+
+        samplePage.setOpaque(false);
+        samplePage.setLayout(new java.awt.BorderLayout());
+
+        sampleNote.setForeground(new java.awt.Color(75, 85, 99));
+        sampleNote.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        sampleNote.setText("The screens (Dashboard, New Order, Job Queue, Inventory ...) are shown here when the app runs.");
+        samplePage.add(sampleNote, java.awt.BorderLayout.CENTER);
+
+        contentPanel.add(samplePage, "sample");
         getContentPane().add(contentPanel, java.awt.BorderLayout.CENTER);
 
         pack();
@@ -119,5 +138,8 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel contentPanel;
     private javax.swing.JPanel sidebarHost;
+    private javax.swing.JPanel samplePage;
+    private javax.swing.JLabel sampleNote;
+    private javax.swing.JLabel sidebarSample;
     // End of variables declaration//GEN-END:variables
 }

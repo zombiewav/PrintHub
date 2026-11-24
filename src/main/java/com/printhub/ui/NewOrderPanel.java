@@ -52,6 +52,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         payCards = (CardLayout) payFields.getLayout();
         payGroup.add(cashRadio);
         payGroup.add(gcashRadio);
+        stockRows.removeAll(); // drop the form's sample rows
         stockRows.setLayout(new BoxLayout(stockRows, BoxLayout.Y_AXIS));
         addDiscountControls();
 
@@ -455,6 +456,7 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
         stockHeading = new javax.swing.JLabel();
         stockHost = new javax.swing.JPanel();
         stockRows = new javax.swing.JPanel();
+        stockSample = new javax.swing.JLabel();
         stockBanner = new com.printhub.ui.RoundedPanel();
         stockBannerText = new javax.swing.JLabel();
         southWrap = new javax.swing.JPanel();
@@ -893,6 +895,9 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
 
         stockRows.setOpaque(false);
         stockRows.setLayout(new java.awt.BorderLayout());
+
+        stockSample.setText("<html><b>Paper (sheets)</b><br>A4 Bond Paper \u00b7 OK \u00b7 Required 1 \u00b7 Available 1,200<br><b>Ink (pages remaining)</b><br>Black Ink \u00b7 OK \u00b7 Required 1 \u00b7 Available 4,800</html>");
+        stockRows.add(stockSample, java.awt.BorderLayout.NORTH);
         stockHost.add(stockRows, java.awt.BorderLayout.NORTH);
         stockCard.add(stockHost, java.awt.BorderLayout.CENTER);
 
@@ -1243,5 +1248,6 @@ public class NewOrderPanel extends javax.swing.JPanel implements Refreshable {
     private javax.swing.JLabel totalLabel;
     private javax.swing.JLabel unitName;
     private javax.swing.JLabel unitPriceLabel;
+    private javax.swing.JLabel stockSample;
     // End of variables declaration//GEN-END:variables
 }

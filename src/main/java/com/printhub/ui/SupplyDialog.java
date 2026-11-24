@@ -96,6 +96,7 @@ public class SupplyDialog extends javax.swing.JDialog {
         statusPanel = new javax.swing.JPanel();
         statusCaption = new javax.swing.JLabel();
         statusHolder = new javax.swing.JPanel();
+        statusSample = new javax.swing.JLabel();
         dialogFiller = new javax.swing.JPanel();
         buttonsPanel = new javax.swing.JPanel();
         cancelButton = new javax.swing.JButton();
@@ -288,6 +289,9 @@ public class SupplyDialog extends javax.swing.JDialog {
 
         statusHolder.setOpaque(false);
         statusHolder.setLayout(new java.awt.BorderLayout());
+
+        statusSample.setText("OK");
+        statusHolder.add(statusSample, java.awt.BorderLayout.CENTER);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
@@ -361,5 +365,6 @@ public class SupplyDialog extends javax.swing.JDialog {
     private javax.swing.JSpinner stockSpinner;
     private javax.swing.JComboBox<String> unitBox;
     private javax.swing.JLabel unitCaption;
+    private javax.swing.JLabel statusSample;
     // End of variables declaration//GEN-END:variables
 }

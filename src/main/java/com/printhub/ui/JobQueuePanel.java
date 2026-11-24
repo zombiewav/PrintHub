@@ -37,6 +37,7 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
 
     public JobQueuePanel() {
         initComponents();
+        tabs.removeAll(); // the form shows sample pages; the real tabs are added below
         pendingTab = Ui.addTab(tabs, "Pending", pendingJobs, 0);
         processingTab = Ui.addTab(tabs, "Processing", processingJobs, 0);
         completedTab = Ui.addTab(tabs, "Completed", completedJobs, 0);
@@ -213,6 +214,14 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         subtitleLabel = new javax.swing.JLabel();
         card = new com.printhub.ui.CardPanel();
         tabs = new javax.swing.JTabbedPane();
+        pagePending = new javax.swing.JPanel();
+        notePending = new javax.swing.JLabel();
+        pageProcessing = new javax.swing.JPanel();
+        noteProcessing = new javax.swing.JLabel();
+        pageCompleted = new javax.swing.JPanel();
+        noteCompleted = new javax.swing.JLabel();
+        pageCancelled = new javax.swing.JPanel();
+        noteCancelled = new javax.swing.JLabel();
         footer = new javax.swing.JPanel();
         startButton = new javax.swing.JButton();
         markDoneButton = new javax.swing.JButton();
@@ -248,6 +257,46 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
         card.setLayout(new java.awt.BorderLayout());
 
         tabs.setOpaque(false);
+
+        pagePending.setBackground(new java.awt.Color(255, 255, 255));
+        pagePending.setLayout(new java.awt.BorderLayout());
+
+        notePending.setForeground(new java.awt.Color(75, 85, 99));
+        notePending.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        notePending.setText("The pending jobs table is filled in when the app runs. See JobTab.");
+        pagePending.add(notePending, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Pending", pagePending);
+
+        pageProcessing.setBackground(new java.awt.Color(255, 255, 255));
+        pageProcessing.setLayout(new java.awt.BorderLayout());
+
+        noteProcessing.setForeground(new java.awt.Color(75, 85, 99));
+        noteProcessing.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        noteProcessing.setText("The processing jobs table is filled in when the app runs.");
+        pageProcessing.add(noteProcessing, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Processing", pageProcessing);
+
+        pageCompleted.setBackground(new java.awt.Color(255, 255, 255));
+        pageCompleted.setLayout(new java.awt.BorderLayout());
+
+        noteCompleted.setForeground(new java.awt.Color(75, 85, 99));
+        noteCompleted.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        noteCompleted.setText("The completed jobs table is filled in when the app runs.");
+        pageCompleted.add(noteCompleted, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Completed", pageCompleted);
+
+        pageCancelled.setBackground(new java.awt.Color(255, 255, 255));
+        pageCancelled.setLayout(new java.awt.BorderLayout());
+
+        noteCancelled.setForeground(new java.awt.Color(75, 85, 99));
+        noteCancelled.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        noteCancelled.setText("The cancelled jobs table is filled in when the app runs.");
+        pageCancelled.add(noteCancelled, java.awt.BorderLayout.CENTER);
+
+        tabs.addTab("Cancelled", pageCancelled);
         card.add(tabs, java.awt.BorderLayout.CENTER);
 
         footer.setOpaque(false);
@@ -305,5 +354,13 @@ public class JobQueuePanel extends javax.swing.JPanel implements Refreshable {
     private javax.swing.JLabel summaryLabel;
     private javax.swing.JTabbedPane tabs;
     private javax.swing.JLabel titleLabel;
+    private javax.swing.JLabel notePending;
+    private javax.swing.JPanel pagePending;
+    private javax.swing.JLabel noteProcessing;
+    private javax.swing.JPanel pageProcessing;
+    private javax.swing.JLabel noteCompleted;
+    private javax.swing.JPanel pageCompleted;
+    private javax.swing.JLabel noteCancelled;
+    private javax.swing.JPanel pageCancelled;
     // End of variables declaration//GEN-END:variables
 }
