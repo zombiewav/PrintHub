@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -53,6 +54,7 @@ public final class PortalServer {
     private HttpServer server;
     private ExecutorService executor;
     private HttpsRefuser httpsRefuser;
+    private volatile Supplier<String> shopName = () -> "PrintHub";
 
     /** @param onChange called after a customer's order joins the queue, so the staff screens can refresh */
     public PortalServer(OrderService orders, JobQueueService queue, PricingService pricing, Path uploadDir,
@@ -110,6 +112,11 @@ public final class PortalServer {
         }
     }
 
+    /** Where the pages get the shop's name for their header (read on every page, so a rename shows at once). */
+    public void setShopName(Supplier<String> shopName) {
+        this.shopName = shopName;
+    }
+
     /** The port that turns away https attempts, or -1 when there is none. */
     public synchronized int httpsRefuserPort() {
         return httpsRefuser == null ? -1 : httpsRefuser.port();
@@ -132,18 +139,18 @@ public final class PortalServer {
             switch (path) {
                 case "/", "/index.html" -> {
                     if (!"GET".equals(ex.getRequestMethod())) {
-                        send(ex, 405, PortalPages.message("Not allowed", "Please use the order form."));
+                        send(ex, 405, PortalPages.message(shopName.get(), "Not allowed", "Please use the order form."));
                     } else {
-                        send(ex, 200, PortalPages.form(OFFERED, (s, z) -> pricing.prices().get(s, z),
-                                pricing.prices().getRushFee()));
+                        send(ex, 200, PortalPages.form(shopName.get(), OFFERED, (s, z) -> pricing.prices().get(s, z),
+                                pricing.prices().getRushFee(), limits.maxUploadBytes(), limits.maxPages(), MAX_COPIES));
                     }
                 }
                 case "/upload" -> upload(ex);
                 case "/ticket" -> ticket(ex);
-                default -> send(ex, 404, PortalPages.message("Page not found", "There is nothing at this address."));
+                default -> send(ex, 404, PortalPages.message(shopName.get(), "Page not found", "There is nothing at this address."));
             }
         } catch (RuntimeException e) {
-            send(ex, 500, PortalPages.message("Something went wrong", "Please try again, or ask the staff for help."));
+            send(ex, 500, PortalPages.message(shopName.get(), "Something went wrong", "Please try again, or ask the staff for help."));
         } finally {
             ex.close();
         }
@@ -151,13 +158,13 @@ public final class PortalServer {
 
     private void upload(HttpExchange ex) throws IOException {
         if (!"POST".equals(ex.getRequestMethod())) {
-            send(ex, 405, PortalPages.message("Not allowed", "Please use the order form."));
+            send(ex, 405, PortalPages.message(shopName.get(), "Not allowed", "Please use the order form."));
             return;
         }
         String phone = ex.getRemoteAddress().getAddress().getHostAddress();
         if (!limiter.allow(phone)) {
             drain(ex.getRequestBody());
-            send(ex, 429, PortalPages.message("Too many orders",
+            send(ex, 429, PortalPages.message(shopName.get(), "Too many orders",
                     "Too many orders were sent from this phone. Please wait a few minutes, or ask the staff."));
             return;
         }
@@ -165,7 +172,7 @@ public final class PortalServer {
         byte[] body = in.readNBytes(limits.maxUploadBytes() + 1);
         if (body.length > limits.maxUploadBytes()) {
             drain(in);
-            send(ex, 413, PortalPages.message("File too big", "That file is too large. The limit is "
+            send(ex, 413, PortalPages.message(shopName.get(), "File too big", "That file is too large. The limit is "
                     + limits.maxUploadBytes() / (1024 * 1024) + " MB."));
             return;
         }
@@ -174,7 +181,7 @@ public final class PortalServer {
         try {
             form = Multipart.parse(ex.getRequestHeaders().getFirst("Content-Type"), body);
         } catch (IllegalArgumentException e) {
-            send(ex, 400, PortalPages.message("Could not read the form", e.getMessage()));
+            send(ex, 400, PortalPages.message(shopName.get(), "Could not read the form", e.getMessage()));
             return;
         }
         try {
@@ -205,9 +212,9 @@ public final class PortalServer {
             ex.getResponseHeaders().add("Cache-Control", "no-store");
             ex.sendResponseHeaders(303, -1);
         } catch (IllegalArgumentException e) {
-            send(ex, 400, PortalPages.message("Cannot take this order", e.getMessage()));
+            send(ex, 400, PortalPages.message(shopName.get(), "Cannot take this order", e.getMessage()));
         } catch (IllegalStateException e) {
-            send(ex, 422, PortalPages.message("Cannot take this order", e.getMessage()));
+            send(ex, 422, PortalPages.message(shopName.get(), "Cannot take this order", e.getMessage()));
         }
     }
 
@@ -215,7 +222,7 @@ public final class PortalServer {
         String id = queryParam(ex, "no");
         JobOrder job = id != null && TICKET.matcher(id).matches() ? find(id) : null;
         if (job == null) {
-            send(ex, 404, PortalPages.message("Ticket not found", "Check the ticket number and try again."));
+            send(ex, 404, PortalPages.message(shopName.get(), "Ticket not found", "Check the ticket number and try again."));
             return;
         }
         int position = 0;
@@ -229,7 +236,7 @@ public final class PortalServer {
                 }
             }
         }
-        send(ex, 200, PortalPages.ticket(job, position));
+        send(ex, 200, PortalPages.ticket(shopName.get(), job, position));
     }
 
     /** Only orders that came through the portal can be looked up here. */
