@@ -15,6 +15,12 @@ public class LoginFrame extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
 
+        if (!PrintHubData.get().isDemoShop()) {
+            // a real shop: no sample sign-in filled in, and the shop's own name under the tagline
+            usernameField.setText("");
+            passwordField.setText("");
+            noteLabel.setText(PrintHubData.get().shopName());
+        }
         usernameField.addActionListener(e -> passwordField.requestFocusInWindow());
         passwordField.addActionListener(e -> signIn());
         loginButton.addActionListener(e -> signIn());

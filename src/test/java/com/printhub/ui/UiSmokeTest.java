@@ -18,8 +18,11 @@ class UiSmokeTest {
 
     @BeforeAll
     static void useThrowawayDatabase() throws Exception {
-        System.setProperty("user.dir", Files.createTempDirectory("printhub-ui").toString());
+        System.setProperty("printhub.home", Files.createTempDirectory("printhub-ui").toString());
         PrintHubTheme.install();
+        if (PrintHubData.needsSetup()) {
+            PrintHubData.loadDemo(); // the sample shop has the admin and staff accounts these tests sign in with
+        }
     }
 
     private static void onSwingThread(Runnable work) throws Exception {

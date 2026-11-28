@@ -34,7 +34,6 @@ import com.printhub.service.SupplierService;
 import com.printhub.web.PortalServer;
 import java.awt.Desktop;
 import java.awt.EventQueue;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,13 +52,40 @@ import javax.swing.Timer;
 public final class PrintHubData {
 
     private static PrintHubData instance;
+    private static Database appDatabase;
 
-    /** The app-wide instance, backed by printhub.db in the folder the app was started from. */
+    /** The shop's database file (see {@link AppPaths}), opened once. */
+    private static synchronized Database appDatabase() {
+        if (appDatabase == null) {
+            try {
+                Files.createDirectories(AppPaths.home());
+            } catch (IOException e) {
+                throw new IllegalStateException("Cannot create the data folder " + AppPaths.home(), e);
+            }
+            appDatabase = Database.open("jdbc:sqlite:" + AppPaths.database());
+        }
+        return appDatabase;
+    }
+
+    /** True on the very first run, before the shop is set up (or the demo is loaded). */
+    public static synchronized boolean needsSetup() {
+        return instance == null && appDatabase().isEmpty();
+    }
+
+    /** First run: creates the owner's admin account with starter prices and supplies. */
+    public static synchronized void setUpShop(ShopSetup setup) {
+        Seeder.starter(appDatabase(), setup);
+    }
+
+    /** First run: fills in the sample shop (accounts admin / admin123 and lmendoza / printhub) for a demo. */
+    public static synchronized void loadDemo() {
+        Seeder.seed(appDatabase());
+    }
+
+    /** The app-wide instance, backed by the shop's database. Set the shop up first (see {@link #needsSetup()}). */
     public static synchronized PrintHubData get() {
         if (instance == null) {
-            String path = System.getProperty("user.dir") + File.separator + "printhub.db";
-            instance = new PrintHubData(Database.open("jdbc:sqlite:" + path),
-                    Path.of(System.getProperty("user.dir"), "uploads"));
+            instance = new PrintHubData(appDatabase(), AppPaths.uploads(), false);
             instance.startBackgroundTasks();
         }
         return instance;
@@ -76,6 +102,7 @@ public final class PrintHubData {
     private final SettingsService shopSettings;
     private final CustomerService customers;
     private final Path uploadDir;
+    private final Settings settings;
     private PortalServer portal;
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
@@ -84,11 +111,18 @@ public final class PrintHubData {
         this(db, Path.of(System.getProperty("java.io.tmpdir"), "printhub-uploads"));
     }
 
-    /** Opens the services on a database, loading the sample shop if it is brand new. */
+    /** Opens the services on a database, loading the sample shop if it is brand new (used by the tests). */
     PrintHubData(Database db, Path uploadDir) {
+        this(db, uploadDir, true);
+    }
+
+    private PrintHubData(Database db, Path uploadDir, boolean sampleIfEmpty) {
         this.uploadDir = uploadDir;
-        Seeder.seed(db);
+        if (sampleIfEmpty) {
+            Seeder.seed(db);
+        }
         Settings settings = new Settings(db);
+        this.settings = settings;
         this.accounts = new AccountService(db);
         this.inventory = new InventoryService(db);
         this.pricing = new PricingService(db);
@@ -401,12 +435,23 @@ public final class PrintHubData {
         changed();
     }
 
+    /** The shop's name from the first-run setup ("PrintHub" for the demo shop). */
+    public String shopName() {
+        return settings.getString("shopName", "PrintHub");
+    }
+
+    /** True for the sample shop (loaded for a demo), which has no shop name of its own. */
+    public boolean isDemoShop() {
+        return settings.getString("shopName", null) == null;
+    }
+
     // ---- Customer portal (phones on the shop's Wi-Fi hotspot) ---------------------------------
 
     /** Starts the portal. Port 0 picks a free port. Throws IOException if the port is already in use. */
     public synchronized void startPortal(int port) throws IOException {
         if (portal == null) {
             portal = new PortalServer(orders, queue, pricing, uploadDir, PortalServer.Limits.defaults(), this::changed);
+            portal.setShopName(this::shopName);
         }
         portal.start(port);
     }

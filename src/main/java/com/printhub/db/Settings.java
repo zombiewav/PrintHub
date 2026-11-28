@@ -16,6 +16,11 @@ public class Settings {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    public String getString(String key, String fallback) {
+        String v = get(key);
+        return v == null || v.isBlank() ? fallback : v;
+    }
+
     public int getInt(String key, int fallback) {
         String v = get(key);
         if (v == null) {

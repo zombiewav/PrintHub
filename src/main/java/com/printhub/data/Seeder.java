@@ -36,6 +36,27 @@ final class Seeder {
     private Seeder() {
     }
 
+    /**
+     * A new shop's first run: the owner's admin account, the shop name, and starter prices, rush fee, supplies
+     * (stock 0, to fill in at the first restock) and the two usual discounts. No sample jobs, sales or suppliers.
+     * Does nothing if the shop is already set up.
+     */
+    static void starter(Database db, ShopSetup setup) {
+        setup.check();
+        if (!db.isEmpty()) {
+            return;
+        }
+        db.inTransaction(() -> {
+            db.update("INSERT INTO account(username, password_hash, full_name, role) VALUES (?,?,?,?)",
+                    setup.username().trim(), PasswordHasher.hash(setup.password()), setup.ownerName().trim(), "ADMIN");
+            db.update("INSERT INTO setting(key, value) VALUES ('shopName', ?)", setup.shopName().trim());
+            prices(db);
+            insertSupplies(db, Map.of(), true);
+            discounts(db);
+        });
+    }
+
+    /** The sample shop with today's jobs, sales and history, for demos and the tests. */
     static void seed(Database db) {
         if (!db.isEmpty()) {
             return;
@@ -132,7 +153,14 @@ final class Seeder {
         }
         reserved.merge("SUP-004", 20, Integer::sum); // the sample online job below: B&W Short 10 x 2
         reserved.merge("SUP-002", 20, Integer::sum);
+        insertSupplies(db, reserved, false);
+    }
 
+    /**
+     * The usual supplies of a small print shop. With {@code empty} the stock starts at 0 (a new shop counts its
+     * shelf at the first restock); otherwise it is the sample stock plus what the queued sample jobs will use.
+     */
+    private static void insertSupplies(Database db, Map<String, Integer> reserved, boolean empty) {
         String none = "—";
         Object[][] rows = {
             {"SUP-001", "Bond Paper 70gsm", "Paper", "A4", "sheets", 1250, 500, 0.45},
@@ -147,7 +175,7 @@ final class Seeder {
             {"SUP-010", "Lamination Film Pouch", "Lamination Film", "Short", "pcs", 120, 100, 8.0}
         };
         for (Object[] r : rows) {
-            int stock = (Integer) r[5] + reserved.getOrDefault((String) r[0], 0);
+            int stock = empty ? 0 : (Integer) r[5] + reserved.getOrDefault((String) r[0], 0);
             db.update("INSERT INTO supply(id, name, category, size, unit, stock, reorder_level, unit_cost_centavos,"
                     + " active) VALUES (?,?,?,?,?,?,?,?,1)", r[0], r[1], r[2], r[3], r[4], stock, r[6],
                     Money.toCentavos((Double) r[7]));

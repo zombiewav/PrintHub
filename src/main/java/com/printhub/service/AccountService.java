@@ -146,7 +146,8 @@ public class AccountService {
         a.setPasswordHash(hash);
     }
 
-    private static void checkPassword(String password) {
+    /** Throws when a password is too short to use. */
+    public static void checkPassword(String password) {
         if (password == null || password.length() < MIN_PASSWORD) {
             throw new IllegalArgumentException("Password must be at least " + MIN_PASSWORD + " characters.");
         }
