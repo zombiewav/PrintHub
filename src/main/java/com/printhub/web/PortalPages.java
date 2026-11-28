@@ -11,7 +11,8 @@ import java.util.function.BiFunction;
 
 /**
  * The pages customers see on their phones. Built for small touch screens first, and self-contained: no fonts,
- * scripts or images from the internet, since phones on the shop's hotspot may have none. The order form works
+ * scripts or images from the internet, since phones on the shop's hotspot may have none (the logo comes from the
+ * portal itself). Always light, even when the phone is set to dark mode. The order form works
  * without JavaScript too; with it, the customer gets a live price, file checks and an upload progress bar.
  * Everything that comes from outside goes through {@link #escape}.
  */
@@ -20,10 +21,7 @@ final class PortalPages {
     private static final String STYLE = """
             :root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#4b5563;--line:#e5e7eb;--field:#f9fafb;
             --accent:#0f766e;--accent-soft:#ccfbf1;--accent-text:#fff;--err:#b91c1c;--err-soft:#fee2e2;--warn:#b45309;
-            --warn-soft:#fef3c7}
-            @media (prefers-color-scheme:dark){:root{--bg:#0b1120;--card:#111827;--text:#f3f4f6;--muted:#9ca3af;
-            --line:#1f2937;--field:#0f172a;--accent:#14b8a6;--accent-soft:#134e4a;--accent-text:#04201d;--err:#f87171;
-            --err-soft:#3b1414;--warn:#fbbf24;--warn-soft:#3a2a06}}
+            --warn-soft:#fef3c7;color-scheme:light only}
             *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
             html{-webkit-text-size-adjust:100%}
             body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);
@@ -31,8 +29,8 @@ final class PortalPages {
             header{background:var(--accent);color:var(--accent-text);padding:18px 16px 22px}
             header .in,main{max-width:520px;margin:0 auto}
             .brand{display:flex;align-items:center;gap:12px}
-            .logo{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);display:grid;place-items:center;
-            font-weight:700;font-size:20px;flex:none}
+            .logo{width:48px;height:48px;border-radius:50%;background:#fff;padding:3px;flex:none;display:block;
+            box-shadow:0 1px 3px rgba(0,0,0,.2)}
             .shop{font-size:19px;font-weight:700;margin:0;overflow-wrap:anywhere}
             .tag{margin:2px 0 0;font-size:14px;opacity:.9}
             main{padding:0 14px 120px;margin-top:-10px}
@@ -160,14 +158,17 @@ final class PortalPages {
 
     private static String page(String shop, String title, String tagline, String refreshSeconds, String body) {
         String name = shop == null || shop.isBlank() ? "PrintHub" : shop.trim();
-        String initial = escape(name.substring(0, 1).toUpperCase(Locale.ROOT));
         return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">"
                 + "<meta name=\"theme-color\" content=\"#0f766e\">"
+                + "<meta name=\"color-scheme\" content=\"light only\">" // keep phones' forced dark mode off the page
                 + "<meta name=\"format-detection\" content=\"telephone=no\">"
+                + "<link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\">"
+                + "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\">"
                 + (refreshSeconds == null ? "" : "<meta http-equiv=\"refresh\" content=\"" + refreshSeconds + "\">")
                 + "<title>" + escape(title) + " - " + escape(name) + "</title><style>" + STYLE + "</style></head><body>"
-                + "<header><div class=\"in brand\"><div class=\"logo\" aria-hidden=\"true\">" + initial + "</div><div>"
+                + "<header><div class=\"in brand\"><img class=\"logo\" src=\"/logo.png\" width=\"48\" height=\"48\" "
+                + "alt=\"PrintHub logo\"><div>"
                 + "<p class=\"shop\">" + escape(name) + "</p><p class=\"tag\">" + escape(tagline) + "</p></div></div></header>"
                 + "<main>" + body + "</main></body></html>";
     }

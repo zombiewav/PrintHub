@@ -388,6 +388,21 @@ class PortalServerTest {
     }
 
     @Test
+    void theLogoAndIconsAreServedAsPngImages() throws Exception {
+        for (String path : new String[] {"/logo.png", "/favicon.ico", "/favicon.png", "/apple-touch-icon.png"}) {
+            HttpResponse<byte[]> r = http.send(HttpRequest.newBuilder(URI.create(base + path)).GET().build(),
+                    HttpResponse.BodyHandlers.ofByteArray());
+            assertEquals(200, r.statusCode(), path);
+            assertEquals("image/png", r.headers().firstValue("Content-Type").orElse(""), path);
+            byte[] png = r.body();
+            assertTrue(png.length > 100 && png[1] == 'P' && png[2] == 'N' && png[3] == 'G', path);
+        }
+        String page = get("/").body();
+        assertTrue(page.contains("src=\"/logo.png\""), "the header shows the logo");
+        assertFalse(page.contains("prefers-color-scheme:dark"), "light mode only");
+    }
+
+    @Test
     void onAnyPortButEightyThereIsNoHttpsRefuser() {
         assertEquals(-1, server.httpsRefuserPort());
     }

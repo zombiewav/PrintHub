@@ -19,7 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -147,6 +149,10 @@ public final class PortalServer {
                 }
                 case "/upload" -> upload(ex);
                 case "/ticket" -> ticket(ex);
+                // the PrintHub logo: page header, browser tab, and the home-screen icon phones ask for by name
+                case "/logo.png" -> sendLogo(ex, 128);
+                case "/favicon.ico", "/favicon.png" -> sendLogo(ex, 64);
+                case "/apple-touch-icon.png", "/apple-touch-icon-precomposed.png" -> sendLogo(ex, 256);
                 default -> send(ex, 404, PortalPages.message(shopName.get(), "Page not found", "There is nothing at this address."));
             }
         } catch (RuntimeException e) {
@@ -310,6 +316,30 @@ public final class PortalServer {
             in.readNBytes(256 * 1024);
         } catch (IOException ignored) {
             // the client went away; nothing to do
+        }
+    }
+
+    private static final Map<Integer, byte[]> LOGOS = new ConcurrentHashMap<>();
+
+    /** One size of the PrintHub logo from the app's own files (read once). Phones may cache it for a day. */
+    private static void sendLogo(HttpExchange ex, int size) throws IOException {
+        byte[] png = LOGOS.computeIfAbsent(size, s -> {
+            try (InputStream in = PortalServer.class.getResourceAsStream("/com/printhub/logo/logo-" + s + ".png")) {
+                return in == null ? new byte[0] : in.readAllBytes();
+            } catch (IOException e) {
+                return new byte[0];
+            }
+        });
+        if (png.length == 0) {
+            send(ex, 404, "Not found");
+            return;
+        }
+        ex.getResponseHeaders().set("Content-Type", "image/png");
+        ex.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
+        ex.getResponseHeaders().set("Cache-Control", "public, max-age=86400");
+        ex.sendResponseHeaders(200, png.length);
+        try (OutputStream out = ex.getResponseBody()) {
+            out.write(png);
         }
     }
 
