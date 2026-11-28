@@ -18,12 +18,45 @@ class LocalAddressesTest {
         }
     }
 
+    private static LocalAddresses.Nic nic(String name, String display, String ip) {
+        return new LocalAddresses.Nic(name, display, ip);
+    }
+
     @Test
     void theWindowsHotspotAddressIsListedFirst() {
-        List<String> sorted = LocalAddresses.hotspotFirst(List.of("192.168.1.20", "192.168.137.1", "10.0.0.5"));
-        assertEquals("192.168.137.1", sorted.get(0));
-        assertEquals(3, sorted.size());
-        assertEquals(List.of("10.0.0.5"), LocalAddresses.hotspotFirst(List.of("10.0.0.5")));
+        List<String> sorted = LocalAddresses.reachable(List.of(
+                nic("wlan0", "Intel(R) Wi-Fi 6 AX201 160MHz", "192.168.1.20"),
+                nic("wlan3", "Microsoft Wi-Fi Direct Virtual Adapter #2", "192.168.137.1"),
+                nic("eth0", "Realtek PCIe GbE Family Controller", "10.0.0.5")));
+        assertEquals(List.of("192.168.137.1", "192.168.1.20", "10.0.0.5"), sorted);
+    }
+
+    @Test
+    void hyperVAndOtherInternalAdaptersAreLeftOut() {
+        // What this machine reported: Windows lists the Hyper-V switch, which phones cannot reach, after Wi-Fi
+        // or even before it.
+        List<String> sorted = LocalAddresses.reachable(List.of(
+                nic("eth12", "Hyper-V Virtual Ethernet Adapter", "172.26.48.1"),
+                nic("wlan0", "Intel(R) Wi-Fi 6 AX201 160MHz", "192.168.1.142"),
+                nic("eth3", "vEthernet (WSL)", "172.19.0.1"),
+                nic("eth4", "VirtualBox Host-Only Ethernet Adapter", "192.168.56.1"),
+                nic("eth5", "VMware Virtual Ethernet Adapter for VMnet8", "192.168.80.1"),
+                nic("eth6", "Bluetooth Device (Personal Area Network)", "192.168.44.1")));
+        assertEquals(List.of("192.168.1.142"), sorted);
+    }
+
+    @Test
+    void wiFiComesBeforeWiredWhenThereIsNoHotspot() {
+        List<String> sorted = LocalAddresses.reachable(List.of(
+                nic("eth0", "Realtek PCIe GbE Family Controller", "10.0.0.5"),
+                nic("wlan0", "Intel(R) Wi-Fi 6 AX201 160MHz", "192.168.1.142")));
+        assertEquals(List.of("192.168.1.142", "10.0.0.5"), sorted);
+    }
+
+    @Test
+    void onlyInternalAdaptersMeansNoAddress() {
+        assertTrue(LocalAddresses.reachable(List.of(nic("eth12", "Hyper-V Virtual Ethernet Adapter", "172.26.48.1")))
+                .isEmpty());
     }
 
     @Test

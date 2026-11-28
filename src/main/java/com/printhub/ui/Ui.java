@@ -22,11 +22,13 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.DefaultFormatter;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -185,7 +187,13 @@ public final class Ui {
         s.setFont(FONT_BODY);
         s.setPreferredSize(new Dimension(s.getPreferredSize().width, FIELD_HEIGHT));
         if (s.getEditor() instanceof JSpinner.DefaultEditor) {
-            ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setHorizontalAlignment(SwingConstants.RIGHT);
+            JFormattedTextField field = ((JSpinner.DefaultEditor) s.getEditor()).getTextField();
+            field.setHorizontalAlignment(SwingConstants.RIGHT);
+            // Buttons here never take focus, so a typed number would stay uncommitted (and be ignored) when the
+            // user clicks a button straight after typing. Take each valid number as it is typed instead.
+            if (field.getFormatter() instanceof DefaultFormatter) {
+                ((DefaultFormatter) field.getFormatter()).setCommitsOnValidEdit(true);
+            }
         }
         return s;
     }

@@ -5,6 +5,7 @@ import com.printhub.web.LocalAddresses;
 import com.printhub.web.QrCodes;
 import java.awt.Window;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -28,7 +29,7 @@ public class PortalDialog extends FormDialog {
 
     private final PrintHubData data = PrintHubData.get();
     private final JLabel statusLabel = Ui.bold(" ");
-    private final JSpinner portSpinner = Ui.spinner(new JSpinner(new SpinnerNumberModel(DEFAULT_PORT, 1, 65535, 1)));
+    private final JSpinner portSpinner = Ui.spinner(portSpinner());
     private final JButton toggleButton = Ui.primary("Start portal");
     private final JLabel addressLabel = Ui.body(" ");
     private final JLabel qrLabel = new JLabel();
@@ -48,10 +49,23 @@ public class PortalDialog extends FormDialog {
         refreshState();
     }
 
+    /** A port is shown as 8080, not 8,080. */
+    private static JSpinner portSpinner() {
+        JSpinner s = new JSpinner(new SpinnerNumberModel(DEFAULT_PORT, 1, 65535, 1));
+        s.setEditor(new JSpinner.NumberEditor(s, "#"));
+        return s;
+    }
+
     private void toggle() {
         if (data.isPortalRunning()) {
             data.stopPortal();
         } else {
+            try {
+                portSpinner.commitEdit(); // take what was typed in the box, even if it still has the cursor
+            } catch (ParseException ex) {
+                warn("The port must be a number from 1 to 65535.");
+                return;
+            }
             int port = (Integer) portSpinner.getValue();
             try {
                 data.startPortal(port);
@@ -87,12 +101,14 @@ public class PortalDialog extends FormDialog {
             List<String> ips = LocalAddresses.ipv4();
             statusLabel.setText("Running: customers can send PDFs");
             if (ips.isEmpty()) {
-                addressLabel.setText("<html>No network address found. Turn on the Mobile Hotspot first.</html>");
+                addressLabel.setText("<html>No network address found. Turn on the Mobile Hotspot first, or connect "
+                        + "this computer to the shop's Wi-Fi.</html>");
                 qrLabel.setIcon(null);
             } else {
                 StringBuilder sb = new StringBuilder("<html>Customers open:<br>");
-                for (String ip : ips) {
-                    sb.append("<b>").append(LocalAddresses.url(ip, data.portalPort())).append("</b><br>");
+                for (int i = 0; i < ips.size(); i++) {
+                    sb.append("<b>").append(LocalAddresses.url(ips.get(i), data.portalPort())).append("</b>")
+                            .append(i == 0 && ips.size() > 1 ? " (the QR code)" : "").append("<br>");
                 }
                 addressLabel.setText(sb.append("</html>").toString());
                 qrLabel.setIcon(new ImageIcon(QrCodes.image(LocalAddresses.url(ips.get(0), data.portalPort()), 200)));
@@ -104,7 +120,8 @@ public class PortalDialog extends FormDialog {
             qrLabel.setIcon(null);
         }
         helpLabel.setText("<html>On Windows: Settings &gt; Network &amp; internet &gt; Mobile hotspot, turn it on. "
-                + "The address is usually 192.168.137.1. If Windows asks, allow PrintHub through the firewall.<br>"
+                + "The address is usually 192.168.137.1. Phones on the same Wi-Fi as this computer can use the "
+                + "address shown instead. If Windows asks, allow PrintHub through the firewall.<br>"
                 + "Orders arrive unpaid. Mark them paid in the Job Queue and they print.</html>");
         pack();
     }
