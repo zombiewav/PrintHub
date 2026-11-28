@@ -19,11 +19,16 @@ import javax.swing.SwingConstants;
  */
 public class PortalDialog extends FormDialog {
 
-    private static final int DEFAULT_PORT = 8080;
+    /**
+     * Port 80 keeps the address short (http://192.168.137.1/) and lets phone browsers that try https:// first fall
+     * back to http:// on their own. On any other port the browser's https try hits the portal itself and fails.
+     */
+    private static final int DEFAULT_PORT = 80;
+    private static final int FALLBACK_PORT = 8080;
 
     private final PrintHubData data = PrintHubData.get();
     private final JLabel statusLabel = Ui.bold(" ");
-    private final JSpinner portSpinner = Ui.spinner(new JSpinner(new SpinnerNumberModel(DEFAULT_PORT, 1024, 65535, 1)));
+    private final JSpinner portSpinner = Ui.spinner(new JSpinner(new SpinnerNumberModel(DEFAULT_PORT, 1, 65535, 1)));
     private final JButton toggleButton = Ui.primary("Start portal");
     private final JLabel addressLabel = Ui.body(" ");
     private final JLabel qrLabel = new JLabel();
@@ -47,14 +52,30 @@ public class PortalDialog extends FormDialog {
         if (data.isPortalRunning()) {
             data.stopPortal();
         } else {
+            int port = (Integer) portSpinner.getValue();
             try {
-                data.startPortal((Integer) portSpinner.getValue());
+                data.startPortal(port);
             } catch (IOException ex) {
-                warn("Could not start the portal on port " + portSpinner.getValue() + ". Is another program using "
-                        + "that port? (" + ex.getMessage() + ")");
+                if (port == DEFAULT_PORT && startOn(FALLBACK_PORT)) {
+                    warn("Port " + DEFAULT_PORT + " is used by another program, so the portal runs on port "
+                            + FALLBACK_PORT + ". Customers must type the address exactly as shown, starting with "
+                            + "http:// (not https://).");
+                } else {
+                    warn("Could not start the portal on port " + port + ". Is another program using "
+                            + "that port? (" + ex.getMessage() + ")");
+                }
             }
         }
         refreshState();
+    }
+
+    private boolean startOn(int port) {
+        try {
+            data.startPortal(port);
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
     }
 
     private void refreshState() {

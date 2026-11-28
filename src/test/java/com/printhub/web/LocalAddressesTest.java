@@ -29,6 +29,7 @@ class LocalAddressesTest {
     @Test
     void theAddressUrlHasTheHttpSchemeAndThePort() {
         assertEquals("http://192.168.137.1:8080/", LocalAddresses.url("192.168.137.1", 8080));
+        assertEquals("http://192.168.137.1/", LocalAddresses.url("192.168.137.1", 80));
     }
 
     @Test

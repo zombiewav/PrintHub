@@ -22,6 +22,12 @@ import com.printhub.service.PaymentService;
 import com.printhub.service.PricingService;
 import com.printhub.service.StockEstimator;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -344,5 +350,45 @@ class PortalServerTest {
         assertEquals(303, upload(form("BW", "A4", "1"), "a.pdf", PdfSupport.pdf(2)).statusCode());
         assertEquals(1, queue.all().size());
         assertEquals(JobStatus.PENDING, queue.all().get(0).getStatus());
+    }
+
+    @Test
+    void anHttpsAttemptIsTurnedAwayAtOnceSoPhoneBrowsersFallBackToHttp() throws Exception {
+        // Phone browsers try https:// first and only fall back to http:// when that fails. The https port must
+        // turn the attempt away straight away instead of leaving the browser waiting on it.
+        server.stop();
+        server = new PortalServer(orders, queue, pricing, uploads, new PortalServer.Limits(5_000_000, 300, 50, 600_000),
+                changes::incrementAndGet);
+        server.start(0, 0);
+        base = "http://localhost:" + server.port();
+        int httpsPort = server.httpsRefuserPort();
+        assertTrue(httpsPort > 0);
+
+        SSLContext tls = SSLContext.getInstance("TLS");
+        tls.init(null, new TrustManager[] {new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] chain, String auth) { }
+            public void checkServerTrusted(X509Certificate[] chain, String auth) { }
+            public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+        }}, null);
+        long started = System.nanoTime();
+        for (int i = 0; i < 3; i++) { // it keeps turning them away, not just the first one
+            try (SSLSocket socket = (SSLSocket) tls.getSocketFactory().createSocket("localhost", httpsPort)) {
+                socket.setSoTimeout(10_000);
+                assertThrows(IOException.class, socket::startHandshake);
+            }
+        }
+        long millis = (System.nanoTime() - started) / 1_000_000;
+        assertTrue(millis < 2_000, "the https attempts took " + millis + " ms to fail");
+        assertEquals(200, get("/").statusCode());
+
+        server.stop();
+        assertEquals(-1, server.httpsRefuserPort());
+        assertThrows(IOException.class, () -> new java.net.Socket("localhost", httpsPort).close());
+        start(new PortalServer.Limits(5_000_000, 300, 50, 600_000)); // so tearDown has a server to stop
+    }
+
+    @Test
+    void onAnyPortButEightyThereIsNoHttpsRefuser() {
+        assertEquals(-1, server.httpsRefuserPort());
     }
 }

@@ -47,7 +47,8 @@ public final class LocalAddresses {
         return sorted;
     }
 
+    /** The address customers open. Port 80 is left out, so the address is short and easy to type. */
     public static String url(String ip, int port) {
-        return "http://" + ip + ":" + port + "/";
+        return port == 80 ? "http://" + ip + "/" : "http://" + ip + ":" + port + "/";
     }
 }

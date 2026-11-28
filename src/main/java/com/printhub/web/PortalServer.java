@@ -52,6 +52,7 @@ public final class PortalServer {
     private final RateLimiter limiter;
     private HttpServer server;
     private ExecutorService executor;
+    private HttpsRefuser httpsRefuser;
 
     /** @param onChange called after a customer's order joins the queue, so the staff screens can refresh */
     public PortalServer(OrderService orders, JobQueueService queue, PricingService pricing, Path uploadDir,
@@ -65,13 +66,27 @@ public final class PortalServer {
         this.limiter = new RateLimiter(limits.uploadsPerWindow(), limits.windowMillis(), System::currentTimeMillis);
     }
 
-    /** Starts listening on every network address of this computer. Port 0 picks a free port. */
+    /**
+     * Starts listening on every network address of this computer. Port 0 picks a free port.
+     * On port 80 it also turns away https on port 443 (see {@link #start(int, int)}).
+     */
     public synchronized void start(int port) throws IOException {
+        start(port, port == 80 ? 443 : -1);
+    }
+
+    /**
+     * Starts the portal on {@code port}. Phone browsers try https:// before http://, and only fall back to http://
+     * once the https attempt fails. For an address on port 80 that attempt goes to {@code httpsPort} (443), so the
+     * portal also listens there and drops each connection at once: the browser falls back straight away instead of
+     * waiting on a closed or firewalled port. Pass -1 to skip this. If that port is taken, the portal still starts.
+     */
+    public synchronized void start(int port, int httpsPort) throws IOException {
         if (server != null) {
             return;
         }
         Files.createDirectories(uploadDir);
         server = HttpServer.create(new InetSocketAddress(port), 0);
+        httpsRefuser = httpsPort < 0 ? null : HttpsRefuser.open(httpsPort);
         executor = Executors.newFixedThreadPool(6, r -> {
             Thread t = new Thread(r, "printhub-portal");
             t.setDaemon(true);
@@ -86,9 +101,18 @@ public final class PortalServer {
         if (server != null) {
             server.stop(0);
             executor.shutdownNow();
+            if (httpsRefuser != null) {
+                httpsRefuser.close();
+            }
             server = null;
             executor = null;
+            httpsRefuser = null;
         }
+    }
+
+    /** The port that turns away https attempts, or -1 when there is none. */
+    public synchronized int httpsRefuserPort() {
+        return httpsRefuser == null ? -1 : httpsRefuser.port();
     }
 
     public synchronized boolean isRunning() {
