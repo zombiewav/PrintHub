@@ -127,6 +127,7 @@ public class Sidebar extends javax.swing.JPanel {
         logoTile.setTileColor(new java.awt.Color(15, 118, 110));
         logoTile.setIconSize(20);
         logoTile.setArc(8);
+        logoTile.setLogo(true);
         logoTile.setPreferredSize(new java.awt.Dimension(32, 32));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;

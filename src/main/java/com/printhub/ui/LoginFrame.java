@@ -9,7 +9,7 @@ public class LoginFrame extends javax.swing.JFrame {
 
     public LoginFrame() {
         initComponents();
-        setIconImage(Ui.appIcon());
+        setIconImages(Ui.appIcons());
         getContentPane().setPreferredSize(new Dimension(1280, 720));
         setMinimumSize(new Dimension(900, 520));
         pack();
@@ -78,7 +78,8 @@ public class LoginFrame extends javax.swing.JFrame {
         logoTile.setTileColor(new java.awt.Color(255, 255, 255));
         logoTile.setIconSize(32);
         logoTile.setArc(12);
-        logoTile.setPreferredSize(new java.awt.Dimension(64, 64));
+        logoTile.setLogo(true);
+        logoTile.setPreferredSize(new java.awt.Dimension(88, 88));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;

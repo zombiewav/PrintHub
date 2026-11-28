@@ -23,7 +23,7 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
         sidebarHost.removeAll(); // the form shows placeholders; the real sidebar and screens are added below
         contentPanel.removeAll();
-        setIconImage(Ui.appIcon());
+        setIconImages(Ui.appIcons());
         cards = (CardLayout) contentPanel.getLayout();
 
         boolean reportsAllowed = user.getRoleType().allows(Permission.VIEW_REPORTS);

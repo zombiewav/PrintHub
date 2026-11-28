@@ -42,7 +42,7 @@ public class SetupFrame extends JFrame {
     public SetupFrame(Runnable onDone) {
         this.onDone = onDone;
         setTitle("PrintHub - Set up your shop");
-        setIconImage(Ui.appIcon());
+        setIconImages(Ui.appIcons());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(brandPanel(), BorderLayout.WEST);
@@ -64,12 +64,8 @@ public class SetupFrame extends JFrame {
         p.setBackground(TEAL);
         p.setPreferredSize(new Dimension(520, 720));
         IconTile logo = new IconTile();
-        logo.setIconName("printer");
-        logo.setIconColor(TEAL);
-        logo.setTileColor(Color.WHITE);
-        logo.setIconSize(32);
-        logo.setArc(12);
-        logo.setPreferredSize(new Dimension(64, 64));
+        logo.setLogo(true);
+        logo.setPreferredSize(new Dimension(88, 88));
         addLeft(p, logo, 0, 24);
         addLeft(p, label("Welcome to PrintHub", Font.BOLD, 32, Color.WHITE), 1, 8);
         addLeft(p, label("<html>Let's set up your shop. This takes a minute<br>and only happens once.</html>",

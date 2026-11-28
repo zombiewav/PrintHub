@@ -254,14 +254,39 @@ public final class Ui {
         return c;
     }
 
-    public static java.awt.Image appIcon() {
-        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(64, 64, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setColor(ACCENT);
-        g.fillRoundRect(0, 0, 64, 64, 14, 14);
-        g.drawImage(Icons.image("printer", 40, Color.WHITE), 12, 12, null);
-        g.dispose();
-        return img;
+    // ---- Logo ---------------------------------------------------------------------------------
+
+    /** The sizes of the PrintHub logo in /com/printhub/logo (made from the original artwork, square, transparent). */
+    private static final int[] LOGO_SIZES = {16, 24, 32, 48, 64, 128, 256};
+    private static final java.util.Map<Integer, java.awt.image.BufferedImage> LOGOS = new java.util.HashMap<>();
+
+    /** The logo image of exactly one of {@link #LOGO_SIZES}. */
+    private static synchronized java.awt.image.BufferedImage logoFile(int size) {
+        return LOGOS.computeIfAbsent(size, s -> {
+            try (java.io.InputStream in = Ui.class.getResourceAsStream("/com/printhub/logo/logo-" + s + ".png")) {
+                return javax.imageio.ImageIO.read(in);
+            } catch (java.io.IOException | IllegalArgumentException e) {
+                throw new IllegalStateException("The PrintHub logo is missing from the app (logo-" + s + ".png).", e);
+            }
+        });
+    }
+
+    /** The smallest logo image at least {@code px} pixels wide (the largest one when none is that big). */
+    public static java.awt.image.BufferedImage logo(int px) {
+        for (int s : LOGO_SIZES) {
+            if (s >= px) {
+                return logoFile(s);
+            }
+        }
+        return logoFile(LOGO_SIZES[LOGO_SIZES.length - 1]);
+    }
+
+    /** Every logo size, for window icons: Windows picks the right one for the title bar, taskbar and Alt+Tab. */
+    public static java.util.List<java.awt.Image> appIcons() {
+        java.util.List<java.awt.Image> all = new java.util.ArrayList<>();
+        for (int s : LOGO_SIZES) {
+            all.add(logoFile(s));
+        }
+        return all;
     }
 }

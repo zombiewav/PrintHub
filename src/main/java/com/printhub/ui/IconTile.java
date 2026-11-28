@@ -8,8 +8,8 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
 /**
- * Rounded square with a centered icon (logo, dashboard card icons).
- * Properties: tileColor, iconName (e.g. "printer"), iconColor, iconSize, arc.
+ * Rounded square with a centered icon (dashboard card icons), or the PrintHub logo.
+ * Properties: tileColor, iconName (e.g. "printer"), iconColor, iconSize, arc, logo.
  */
 public class IconTile extends JLabel {
 
@@ -18,6 +18,7 @@ public class IconTile extends JLabel {
     private Color iconColor = Color.BLACK;
     private int iconSize = 20;
     private int arc = 8;
+    private boolean logo;
 
     public IconTile() {
         setHorizontalAlignment(SwingConstants.CENTER);
@@ -71,17 +72,38 @@ public class IconTile extends JLabel {
     }
 
     private void refreshIcon() {
-        if (iconName == null || iconName.isEmpty()) {
+        if (logo || iconName == null || iconName.isEmpty()) {
             setIcon(null);
         } else {
             setIcon(Icons.get(iconName, iconSize, iconColor));
         }
     }
 
+    public boolean isLogo() {
+        return logo;
+    }
+
+    /** True: draw the PrintHub logo over the whole tile instead of a colored tile with an icon. */
+    public void setLogo(boolean logo) {
+        this.logo = logo;
+        refreshIcon();
+        repaint();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        if (logo) {
+            // pick the logo file for the real pixel size (display scaling), so it stays sharp
+            int side = Math.min(getWidth(), getHeight());
+            double scale = g2.getTransform().getScaleX();
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.drawImage(Ui.logo((int) Math.ceil(side * scale)), (getWidth() - side) / 2, (getHeight() - side) / 2,
+                    side, side, null);
+            g2.dispose();
+            return;
+        }
         g2.setColor(tileColor);
         g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
         g2.dispose();

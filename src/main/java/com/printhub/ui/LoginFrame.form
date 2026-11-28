@@ -50,8 +50,9 @@
             </Property>
             <Property name="iconSize" type="int" value="32"/>
             <Property name="arc" type="int" value="12"/>
+            <Property name="logo" type="boolean" value="true"/>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[64, 64]"/>
+              <Dimension value="[88, 88]"/>
             </Property>
           </Properties>
           <Constraints>
