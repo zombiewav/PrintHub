@@ -55,7 +55,9 @@ public class PriceSettingsPanel extends javax.swing.JPanel implements Refreshabl
         revertButton.addActionListener(e -> refresh());
         saveButton.addActionListener(e -> save());
         if (!editable) {
-            rushFeeField.setEditable(false);
+            // disabled, not just read-only: a read-only box still looks like one you can type in
+            rushFeeField.setEnabled(false);
+            matrixHint.setText("Only an admin can change prices and the rush fee.");
             revertButton.setEnabled(false);
             saveButton.setEnabled(false);
         } else {
